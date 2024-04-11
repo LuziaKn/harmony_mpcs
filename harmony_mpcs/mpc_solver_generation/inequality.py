@@ -328,11 +328,8 @@ class FixedEllipsoidConstraints:
 
         self.nh = self.max_obstacles * n_discs
 
-        for disc in range(n_discs):
-            for obst_id in range(0, max_obstacles+1):
-                if num_constraints>0:
-                    params.add_parameter(self.constraint_name(disc, obst_id) + "_closest_points_x", num_constraints)
-                    params.add_parameter(self.constraint_name(disc, obst_id) + "_closest_points_y", num_constraints)
+        params.add_parameter("disc_r")
+
 
 
     def constraint_name(self, disc_idx, obst_id):

@@ -36,7 +36,7 @@ if module_selection == 1:
     use_fixed_linear_constraints = False
     use_interactive_ellipsoid_constraints = False
     gaussian = False
-    use_static_linear_constraints  = True
+    use_static_linear_constraints  = False
 
 # --- Interface Selection --- #
 interfaces = ['JackalSimulator', 'Jackal']  # Define the interfaces that this solver can run with
@@ -73,15 +73,9 @@ weights = helpers.WeightStructure(params, weight_list)
 
 # --- Inequality Constraints --- #
 # Parameters for the vehicle collision region
-params.add_parameter("disc_r")
-params.add_parameter("disc_offset", n_discs)
 
-params.add_parameter("step" , 1)
 for disc_id in range(n_discs): #todo consider disc?
-    for id in range(n_agents_mpc):
-        params.add_parameter("initial_state_" + str(id), 5)
-        params.add_parameter("start_state_" + str(id), 2)
-        params.add_parameter("other_agents_hidden_params_" + str(id), 6)
+
     for obs_id in range(n_agents_mpc):
         params.add_parameter("agents_pos_r_" + str(obs_id), 6)
 

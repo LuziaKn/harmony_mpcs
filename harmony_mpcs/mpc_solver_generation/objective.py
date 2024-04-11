@@ -200,72 +200,39 @@ class FixedMPCObjective:
         self.system = system
         self.config = config
 
-
     def define_parameters(self, params):
         params.add_parameter("goal", 3)
-        params.add_parameter("Wrepulsive")
-        params.add_parameter("Wx")
-        params.add_parameter("Wy")
+        params.add_parameter("Wgoal")
         params.add_parameter("Walpha")
-        params.add_parameter("Wtheta")
         params.add_parameter("Wa")
-        params.add_parameter("Ws")
-        params.add_parameter("Wv")
-        params.add_parameter("Ww")
-        params.add_parameter("Wothers")
-
-
-
+  
     def get_value(self, x, u, settings, stage_idx):
 
-        # print(stage_idx)
-        cost = 0
-        # if stage_idx == settings.N_bar - 1:  # settings.N - 1:
-        # if stage_idx == settings.N - 1:
-        if True:
-            pos_x = x[0]
-            pos_y = x[1]
-            pos = x[:2]
-            v = x[3]
-            a = u[0]
-            alpha = u[1]
+        pos_x = x[0]
+        pos_y = x[1]
+        pos = x[:2]
+        v = x[3]
+        a = u[0]
+        alpha = u[1]
 
+        # Parameters
+        goal = getattr(settings.params, "goal")
 
-            # Parameters
-            goal = getattr(settings.params, "goal")
-
-            Wrepulsive = getattr(settings.params, "Wrepulsive")
-            Wx = getattr(settings.params, "Wx")
-            Wy = getattr(settings.params, "Wy")
-            Walpha = getattr(settings.params, "Walpha")
-            Wa = getattr(settings.params, "Wa")
-            Ws = getattr(settings.params, "Ws")
-            Wv = getattr(settings.params, "Wv")
-            Ww = getattr(settings.params, "Ww")
-            Wothers = getattr(settings.params, "Wothers")
-
-            r_robot = getattr(settings.params, 'disc_r')
-
-            initial_pos = getattr(settings.params, "initial_state_0")[:2]
-            start_pos = getattr(settings.params, "start_state_0")[:2]
-
-
-
-            # Derive position error
-            goal_dist_error = (pos[0] - goal[0]) ** 2 + (pos[1] - goal[1]) ** 2
-
-
-
-
+        Wgoal = getattr(settings.params, "Wgoal")
+        Walpha = getattr(settings.params, "Walpha")
+        Wa = getattr(settings.params, "Wa")
+    
+        # Derive position error
+        goal_dist_error = (pos[0] - goal[0]) ** 2 + (pos[1] - goal[1]) ** 2
            
-            if u.shape[0] >= 2:  # Todo check meaning
-                if stage_idx == self.config.MPCConfig.FORCES_N + 1:
-                    cost = Wx * goal_dist_error 
-                else:
-                    cost =  Wx * goal_dist_error
-                    + Walpha * alpha * alpha + Wa * a * a
+        if u.shape[0] >= 2:  # Todo check meaning
+            if stage_idx == self.config.MPCConfig.FORCES_N + 1:
+                cost = Wgoal * goal_dist_error 
             else:
-                print("not implemented yet")
+                cost =  Wgoal * goal_dist_error
+                + Walpha * alpha * alpha + Wa * a * a
+        else:
+            print("not implemented yet")
 
         return cost
 
