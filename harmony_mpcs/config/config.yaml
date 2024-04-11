@@ -1,0 +1,50 @@
+MPCConfig:
+  use_linear_constraints: False
+  use_ellipsoid_constraints: False
+  use_combined_dynamics: True
+  use_interactive_linear_constraints: False
+  use_interactive_ellipsoid_constraints: True
+  use_fixed_linear_constraints: False
+  n_fixed_linear_constraints: 0
+  gaussian: False
+  N: 20
+  nu: 3
+  nx: 5
+  n_agents_mpc: 2
+
+  goal_error_weight: 1
+  goal_error_others_weight: 5000
+SFMConfig:
+  forceFactorDesired: 1
+  forceFactorSocial: [0.1,1.5, 1.5, 1.5,1.5,1.5]
+  forceFactorObstacle: 0.0
+  pref_speed: 1
+  pref_add_dist: [0,0,0,0, 0, 0]
+  pref_side: [0.005,0.005,0.005,0.005,0.005,0.005]
+  side_flexibility: [1,1,1,1,1,1]
+  acc_limit: 1.0
+
+EvaluationConfig:
+  plot_on : True
+  draw_initial_guess: True
+  n_episodes: 50
+  near_goal_threshold: 1
+  experiment_name: '0401_interactive_mpc_tight'
+
+  apply_mpc_fixed_predictions: False
+  apply_mpc_true_interactive_predictions: True
+  apply_mpc_est_interactive_predictions: False
+
+  fixed_predictions_type: 'sfm'
+
+  xlimits: [-8, 8]
+  ylimits: [-3, 5]
+
+EnvironmentConfig:
+  ego_policy: 'InteractiveMPCPolicy'
+  ego_dynamics: 'UnicycleSecondOrderEulerDiscreteDynamics'
+  others_policy: ['SocialForcesPolicy']
+  others_dynamics: 'PtMass2ODiscreteDynamics'
+  scenario: 'slow_down_scenario' #'crossing_scenario' # 'pairwise_swap_scenario'
+
+  max_steps: 200
