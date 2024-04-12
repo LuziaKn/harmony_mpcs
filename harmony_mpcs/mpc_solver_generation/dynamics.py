@@ -129,7 +129,7 @@ class BicycleModel(DynamicModel):
 class PointMass_2order_Model(DynamicModel):
 
     def __init__(self, robot_config):
-        self.nu = 2 # number of control variables
+        self.nu = 3 # number of control variables
         self.nx = 5 # number of states
 
         super(PointMass_2order_Model, self).__init__(robot_config)
@@ -138,7 +138,7 @@ class PointMass_2order_Model(DynamicModel):
         self.states_from_sensor = [True, True, True, True, True]  # , True, True
         self.states_from_sensor_at_infeasible = [True, True, True, True, True]  # False variables are guessed 0 at infeasible
 
-        self.inputs = ['a_x', 'a_y']
+        self.inputs = ['a_x', 'a_y', 'slack']
         self.inputs_to_vehicle = [True, True, False]
         self.possible_inputs_to_vehicle = ['a_x', 'a_y']
 

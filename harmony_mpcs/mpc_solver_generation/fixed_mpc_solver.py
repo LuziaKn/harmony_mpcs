@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     # Systems to control
 
-    model = dynamics.BicycleModel(robot_config=settings.robot_config)
+    model = dynamics.PointMass_2order_Model(robot_config=settings.robot_config)
     model.interfaces = settings.interfaces
 
     print(model)

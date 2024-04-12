@@ -57,14 +57,9 @@ class RobotConfig:
         self.lower_bound['x'] = -10.0
         self.upper_bound['x'] = 10.0
 
-        self.lower_bound['x0'] = -10.0
-        self.upper_bound['x0'] = 10.0
-
         self.lower_bound['y'] = -10.0
         self.upper_bound['y'] = 10.0
 
-        self.lower_bound['y0'] = -10.0
-        self.upper_bound['y0'] = 10.0
 
         self.lower_bound['psi'] = -2 * np.pi
         self.upper_bound['psi'] = +2 * np.pi
@@ -72,73 +67,21 @@ class RobotConfig:
         self.lower_bound['psi0'] = -2 * np.pi
         self.upper_bound['psi0'] = +2 * np.pi
 
-        self.lower_bound['v'] = 0.0
-        self.upper_bound['v'] = 1.5
+        self.lower_bound['v_x'] = -1.2
+        self.upper_bound['v_x'] = 1.2
 
-        self.lower_bound['v0'] = 0.0
-        self.upper_bound['v0'] = 1.5
+        self.lower_bound['v_y'] = -1.2
+        self.upper_bound['v_y'] = 1.2
 
-        self.lower_bound['v_x0'] = -1.4
-        self.upper_bound['v_x0'] = 1.4
+        self.lower_bound['a_x'] = -0.5
+        self.upper_bound['a_x'] = 0.5
 
-        self.lower_bound['v_y0'] = -1.4
-        self.upper_bound['v_y0'] = 1.4
-
-        self.lower_bound['w'] = -2.0
-        self.upper_bound['w'] = 2.0
-
-        self.lower_bound['w0'] = -2.0
-        self.upper_bound['w0'] = 2.0
-
-        self.lower_bound['alpha'] = -2.0  # Not correct!
-        self.upper_bound['alpha'] = 2.0
-
-        self.lower_bound['alpha0'] = -2.0  # Not correct!
-        self.upper_bound['alpha0'] = 2.0
-
-        self.lower_bound['a'] = -1.5
-        self.upper_bound['a'] = 1.5
-
-        self.lower_bound['a0'] = -1.0
-        self.upper_bound['a0'] = 1.0
-
-        for i in range(1, n_agents_mpc):
-
-            self.lower_bound[f'x{i}'] = -10.0
-            self.upper_bound[f'x{i}'] = 10.0
-
-            self.lower_bound[f'y{i}'] = -10.0
-            self.upper_bound[f'y{i}'] = 10.0
-
-            self.lower_bound[f'psi{i}'] = -2 * np.pi
-            self.upper_bound[f'psi{i}'] = +2 * np.pi
-
-            self.lower_bound[f'v_x{i}'] = -1.2
-            self.upper_bound[f'v_x{i}'] = 1.2
-
-            self.lower_bound[f'v_y{i}'] = -1.2
-            self.upper_bound[f'v_y{i}'] = 1.2
-
-
-        self.lower_bound['spline'] = -1.0
-        self.upper_bound['spline'] = 10000.0
-
-
-
-        self.lower_bound['a_x'] = -2.0
-        self.upper_bound['a_x'] = 2.0
-
-        self.lower_bound['a_y'] = -2.0
-        self.upper_bound['a_y'] = 2.0
+        self.lower_bound['a_y'] = -1.0
+        self.upper_bound['a_y'] = 1.0
 
         self.lower_bound['slack'] = 0.0
         self.upper_bound['slack'] = 0.2
 
-        self.lower_bound['slack0'] = 0.0
-        self.upper_bound['slack0'] = 1
-
-        self.lower_bound['side_pref'] = -1
-        self.upper_bound['side_pref'] = 1
 
 
 

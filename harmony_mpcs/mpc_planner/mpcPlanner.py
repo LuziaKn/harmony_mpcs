@@ -76,8 +76,6 @@ class MPCPlanner(object):
                 except Exception as e:
                     print(f"An error occurred: {e}")
             
-
-
         
 
     def setParams(self, obs):
@@ -112,11 +110,11 @@ class MPCPlanner(object):
             action = self.output[1,self._nu + self._nx-2:]
         else: action = np.array([0,0])
 
-        return action
+        return action, self.output
 
     
     def computeAction(self, obs):
-        self._action = self.solve(obs)
+        self._action, output = self.solve(obs)
 
         # print('action: ', self._action)
-        return self._action #, output, exitflag, self.vel_limit
+        return self._action, output #, exitflag, self.vel_limit
