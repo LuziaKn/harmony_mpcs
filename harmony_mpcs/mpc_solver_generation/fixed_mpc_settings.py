@@ -30,7 +30,7 @@ module_selection = 1 # 1: GO-MPC
 
 if module_selection == 1:
     use_linear_constraints = False
-    use_ellipsoid_constraints = True
+    use_ellipsoid_constraints = False
     use_combined_dynamics = False
     use_interactive_linear_constraints = False
     use_fixed_linear_constraints = False

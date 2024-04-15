@@ -58,13 +58,13 @@ class FixedMPCObjective:
     
         # Derive position error
         goal_dist_error = (pos[0] - goal[0]) ** 2 + (pos[1] - goal[1]) ** 2
+        normalized_goal_dist_error = goal_dist_error/ ca.fmax(ca.sqrt(goal_dist_error), 0.1)
            
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self.config.MPCConfig.FORCES_N + 1:
-                cost = Wgoal * goal_dist_error 
+                cost = Wgoal * normalized_goal_dist_error
             else:
-                cost =  Wgoal * goal_dist_error
-                + Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y
+                cost =   Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y
         else:
             print("not implemented yet")
 

@@ -365,7 +365,7 @@ class FixedEllipsoidConstraints:
             diff = pos - pos_obst
             dist = casadi.sqrt(diff[0]**2 + diff[1]**2)
 
-            constraints.append(-(dist-r_obst-r_robot)-u[2])
+            constraints.append(-(dist-r_obst-r_robot))
             print('constraint added agent' + str(id))
 
 

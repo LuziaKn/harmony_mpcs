@@ -76,8 +76,8 @@ class RobotConfig:
         self.lower_bound['a_x'] = -0.5
         self.upper_bound['a_x'] = 0.5
 
-        self.lower_bound['a_y'] = -1.0
-        self.upper_bound['a_y'] = 1.0
+        self.lower_bound['a_y'] = -0.5
+        self.upper_bound['a_y'] = 0.5
 
         self.lower_bound['slack'] = 0.0
         self.upper_bound['slack'] = 0.2

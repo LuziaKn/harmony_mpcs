@@ -42,8 +42,8 @@ class MPCPlanner(object):
         self._nx = self._properties['nx']
         self._nu = self._properties['nu']
         self._npar = self._properties['npar']
-        print(self._map_runtime_par)
         self._N = self._properties['N']
+        self._output = np.zeros((self._N, self._nx + self._nu))
 
     def reset(self):
         self._initial_step = True
@@ -85,12 +85,16 @@ class MPCPlanner(object):
             self.dim = 3
             for i in range(self.dim):
                 self._params[k+self._map_runtime_par['goal'][i]] = obs['goal'][i]
-            self._params[k+self._map_runtime_par['disc_r'][0]] = 0.4
+            #self._params[k+self._map_runtime_par['disc_r'][0]] = 0.4
+            others_state = np.array([-10, -10, 0, 0, 0, 0.25])
+            for i in range(len(others_state)):
+                self._params[k+self._map_runtime_par['agents_pos_r_1'][i]] = others_state[i]
 
     
     def solve(self, obs):
 
         self._xinit = np.concatenate([obs['x'], obs['xdot']])
+        
 
         self.setX0(initialize_type="current_state", initial_step=self._initial_step)
         self.setParams(obs)
@@ -100,17 +104,18 @@ class MPCPlanner(object):
         problem["x0"] = self._x0.flatten()[:]
         problem["all_parameters"] = self._params
 
-        self.output, exitflag, info = self._solver.solve(problem)
-        self.output = output2array(self.output)
+
+        self._output, exitflag, info = self._solver.solve(problem)
+        self._output = output2array(self._output)
 
         if exitflag < 0:
             print(exitflag)
 
         if exitflag == 1:
-            action = self.output[1,self._nu + self._nx-2:]
+            action = self._output[1,self._nu + self._nx-2:]
         else: action = np.array([0,0])
 
-        return action, self.output
+        return action, self._output
 
     
     def computeAction(self, obs):
