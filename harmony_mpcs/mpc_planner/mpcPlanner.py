@@ -50,6 +50,7 @@ class MPCPlanner(object):
 
         self._x0 = np.zeros(shape=(self._N, self._nx + self._nu))
         self._xinit = np.zeros(self._nx)
+        print(self._nx)
         self._params = np.zeros(shape=(self._npar * self._N), dtype=float)
 
         self.setWeights()
@@ -84,7 +85,8 @@ class MPCPlanner(object):
         
             self.dim = 3
             for i in range(self.dim):
-                self._params[k+self._map_runtime_par['goal'][i]] = obs['goal'][i]
+                self._params[k+self._map_runtime_par['goal_position'][i]] = obs['goal']['position'][i]
+            self._params[k+self._map_runtime_par['goal_orientation'][0]] = obs['goal']['orientation']
             #self._params[k+self._map_runtime_par['disc_r'][0]] = 0.4
             others_state = np.array([-10, -10, 0, 0, 0, 0.25])
             for i in range(len(others_state)):
@@ -112,8 +114,8 @@ class MPCPlanner(object):
             print(exitflag)
 
         if exitflag == 1:
-            action = self._output[1,self._nu + self._nx-2:]
-        else: action = np.array([0,0])
+            action = self._output[1,self._nu + self._nx-3:]
+        else: action = np.array([0,0,0])
 
         return action, self._output
 

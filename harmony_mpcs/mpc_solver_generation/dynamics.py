@@ -129,16 +129,16 @@ class BicycleModel(DynamicModel):
 class PointMass_2order_Model(DynamicModel):
 
     def __init__(self, robot_config):
-        self.nu = 3 # number of control variables
-        self.nx = 5 # number of states
+        self.nu = 4 # number of control variables
+        self.nx = 6 # number of states
 
         super(PointMass_2order_Model, self).__init__(robot_config)
 
-        self.states = ['x', 'y', 'psi', 'v_x', 'v_y']  # , 'ax', 'ay'
-        self.states_from_sensor = [True, True, True, True, True]  # , True, True
-        self.states_from_sensor_at_infeasible = [True, True, True, True, True]  # False variables are guessed 0 at infeasible
+        self.states = ['x', 'y', 'psi', 'v_x', 'v_y', 'w']  # , 'ax', 'ay'
+        self.states_from_sensor = [True, True, True, True, True, True]  # , True, True
+        self.states_from_sensor_at_infeasible = [True, True, True, True, True, True]  # False variables are guessed 0 at infeasible
 
-        self.inputs = ['a_x', 'a_y', 'slack']
+        self.inputs = ['a_x', 'a_y', 'alpha', 'slack']
         self.inputs_to_vehicle = [True, True, False]
         self.possible_inputs_to_vehicle = ['a_x', 'a_y']
 
@@ -147,15 +147,18 @@ class PointMass_2order_Model(DynamicModel):
 
         a_x = u[0]
         a_y = u[1]
+        alpha = u[2]
         psi = x[2]
         v_x = x[3]
         v_y = x[4]
+        w = x[5]
 
         return ca.vertcat(v_x,
                          v_y,
-                         0,
+                         w,
                          a_x,
-                         a_y)
+                         a_y,
+                         alpha)
 
 
 

@@ -36,7 +36,8 @@ class FixedMPCObjective:
         self.config = config
 
     def define_parameters(self, params):
-        params.add_parameter("goal", 3)
+        params.add_parameter("goal_position", 3)
+        params.add_parameter("goal_orientation")
         params.add_parameter("Wgoal")
         params.add_parameter("Wv")
         params.add_parameter("Wa")
@@ -44,35 +45,34 @@ class FixedMPCObjective:
     def get_value(self, x, u, settings, stage_idx):
 
         pos = x[:2]
+        psi = x[2]
         v_x = x[3]
         v_y = x[4]
         a_x = u[0]
         a_y = u[1]
 
         # Parameters
-        goal = getattr(settings.params, "goal")
+        goal_position = getattr(settings.params, "goal_position")
+        goal_orientation = getattr(settings.params, "goal_orientation")
 
         Wgoal = getattr(settings.params, "Wgoal")
         Wv = getattr(settings.params, "Wv")
         Wa = getattr(settings.params, "Wa")
     
         # Derive position error
-        goal_dist_error = (pos[0] - goal[0]) ** 2 + (pos[1] - goal[1]) ** 2
+        goal_dist_error = (pos[0] - goal_position[0]) ** 2 + (pos[1] - goal_position[1]) ** 2
+        goal_orientation_error = ca.fmin((psi - goal_orientation) ** 2, (2*ca.pi-(psi - goal_orientation)) ** 2)
         normalized_goal_dist_error = goal_dist_error/ ca.fmax(ca.sqrt(goal_dist_error), 0.1)
            
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self.config.MPCConfig.FORCES_N + 1:
-                cost = Wgoal * normalized_goal_dist_error
+                cost = Wgoal * goal_dist_error + Wgoal * goal_orientation_error
             else:
                 cost =   Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y
         else:
             print("not implemented yet")
 
         return cost
-
-
-
-
 
 
 

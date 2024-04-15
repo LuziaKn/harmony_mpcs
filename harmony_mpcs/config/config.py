@@ -64,8 +64,8 @@ class RobotConfig:
         self.lower_bound['psi'] = -2 * np.pi
         self.upper_bound['psi'] = +2 * np.pi
 
-        self.lower_bound['psi0'] = -2 * np.pi
-        self.upper_bound['psi0'] = +2 * np.pi
+        self.lower_bound['w'] = -1/4 * np.pi
+        self.upper_bound['w'] = +1/4 * np.pi
 
         self.lower_bound['v_x'] = -1.2
         self.upper_bound['v_x'] = 1.2
@@ -78,6 +78,11 @@ class RobotConfig:
 
         self.lower_bound['a_y'] = -0.5
         self.upper_bound['a_y'] = 0.5
+
+        self.lower_bound['alpha'] = -0.5
+        self.upper_bound['alpha'] = 0.5
+
+
 
         self.lower_bound['slack'] = 0.0
         self.upper_bound['slack'] = 0.2
