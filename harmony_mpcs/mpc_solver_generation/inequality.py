@@ -1,6 +1,6 @@
 import casadi
 import numpy as np
-import mpc_solver_generation.helpers as helpers
+import harmony_mpcs.mpc_solver_generation.helpers as helpers
 
 
 """ 

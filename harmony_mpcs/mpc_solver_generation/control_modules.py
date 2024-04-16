@@ -1,5 +1,5 @@
-import mpc_solver_generation.inequality as inequality
-import mpc_solver_generation.objective as objective
+import harmony_mpcs.mpc_solver_generation.inequality as inequality
+import harmony_mpcs.mpc_solver_generation.objective as objective
 
 class ModuleManager:
     """

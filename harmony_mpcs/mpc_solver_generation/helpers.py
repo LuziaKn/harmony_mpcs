@@ -1,6 +1,7 @@
 import numpy as np
 import casadi
 import os, sys
+import casadi as ca
 
 def load_forces_path():
 
@@ -115,3 +116,11 @@ def rotation_matrix(angle):
     return np.array([[casadi.cos(angle), -casadi.sin(angle)],
                       [casadi.sin(angle), casadi.cos(angle)]])
 
+def approx_max(x, lamda=50):
+    return (1 / lamda) * ca.log(ca.exp(lamda * x[0]) + ca.exp(lamda* x[1]))
+
+def approx_min(x, lamda=50):
+    return - (1 / lamda) * ca.log(ca.exp(-lamda * x[0]) + ca.exp(-lamda * x[1]))
+
+def get_min_angle_between_vec(orientation1, orientation2):
+    return ca.fmin((orientation1 - orientation2) ** 2, (2*ca.pi-(orientation1 - orientation2)) ** 2)

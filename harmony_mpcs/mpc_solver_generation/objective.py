@@ -5,6 +5,7 @@ Objective.py defines the objective for the solver. Currently it is system specif
 
 import numpy as np
 import casadi as ca
+from harmony_mpcs.mpc_solver_generation.helpers import approx_max, approx_min, get_min_angle_between_vec
 
 
 import config
@@ -37,8 +38,11 @@ class FixedMPCObjective:
 
     def define_parameters(self, params):
         params.add_parameter("goal_position", 3)
+        params.add_parameter("initial_pose", 3)
         params.add_parameter("goal_orientation")
-        params.add_parameter("Wgoal")
+        params.add_parameter("Wgoal_position")
+        params.add_parameter("Wgoal_orientation")
+        params.add_parameter("Wvel_orientation")
         params.add_parameter("Wv")
         params.add_parameter("Wa")
   
@@ -51,22 +55,39 @@ class FixedMPCObjective:
         a_x = u[0]
         a_y = u[1]
 
+        speed = ca.norm_2(x[3:5])
+
         # Parameters
+        initial_pose = getattr(settings.params, "initial_pose")
+ 
         goal_position = getattr(settings.params, "goal_position")
         goal_orientation = getattr(settings.params, "goal_orientation")
 
-        Wgoal = getattr(settings.params, "Wgoal")
+        Wgoal_position = getattr(settings.params, "Wgoal_position")
+        Wgoal_orientation = getattr(settings.params, "Wgoal_orientation")
+
+        Wvel_orientation = getattr(settings.params, "Wvel_orientation")
         Wv = getattr(settings.params, "Wv")
         Wa = getattr(settings.params, "Wa")
     
         # Derive position error
         goal_dist_error = (pos[0] - goal_position[0]) ** 2 + (pos[1] - goal_position[1]) ** 2
-        goal_orientation_error = ca.fmin((psi - goal_orientation) ** 2, (2*ca.pi-(psi - goal_orientation)) ** 2)
-        normalized_goal_dist_error = goal_dist_error/ ca.fmax(ca.sqrt(goal_dist_error), 0.1)
+        initial_goal_dist_error = (initial_pose[0] - goal_position[0]) ** 2 + (initial_pose[1] - goal_position[1]) ** 2
+        goal_dist_error_normalized = goal_dist_error/initial_goal_dist_error    
+
+        # derive velocity vector angle
+        vel_orientation = ca.if_else(speed > 0.1, ca.atan2(ca.fmax(v_y,0.01),v_x), goal_orientation)
+
+        goal_orientation_error = get_min_angle_between_vec(psi,goal_orientation) / get_min_angle_between_vec(initial_pose[2],goal_orientation)
+        vel_orientation_error = get_min_angle_between_vec(psi,vel_orientation) / get_min_angle_between_vec(initial_pose[2],goal_orientation)
+
+        dist_threshold = 0.5
+
+        switch_orientation = approx_min([initial_goal_dist_error/(dist_threshold ** 2), 1])
            
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self.config.MPCConfig.FORCES_N + 1:
-                cost = Wgoal * goal_dist_error + Wgoal * goal_orientation_error
+                cost = Wgoal_position * goal_dist_error_normalized + (1-switch_orientation) * Wgoal_orientation * goal_orientation_error + switch_orientation * Wgoal_orientation* vel_orientation_error
             else:
                 cost =   Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y
         else:

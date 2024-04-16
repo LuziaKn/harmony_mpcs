@@ -86,11 +86,13 @@ class MPCPlanner(object):
             self.dim = 3
             for i in range(self.dim):
                 self._params[k+self._map_runtime_par['goal_position'][i]] = obs['goal']['position'][i]
+                self._params[k+self._map_runtime_par['initial_pose'][i]] = self._xinit[i]
             self._params[k+self._map_runtime_par['goal_orientation'][0]] = obs['goal']['orientation']
             #self._params[k+self._map_runtime_par['disc_r'][0]] = 0.4
             others_state = np.array([-10, -10, 0, 0, 0, 0.25])
             for i in range(len(others_state)):
                 self._params[k+self._map_runtime_par['agents_pos_r_1'][i]] = others_state[i]
+            
 
     
     def solve(self, obs):
@@ -110,10 +112,10 @@ class MPCPlanner(object):
         self._output, exitflag, info = self._solver.solve(problem)
         self._output = output2array(self._output)
 
-        if exitflag < 0:
+        if exitflag <= 0:
             print(exitflag)
 
-        if exitflag == 1:
+        if exitflag == 1 or exitflag == 0:
             action = self._output[1,self._nu + self._nx-3:]
         else: action = np.array([0,0,0])
 

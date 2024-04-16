@@ -12,7 +12,7 @@ sys.path.append("../")
 sys.path.append("")
 
 sys.path.append('/home/luzia/code/forces_pro_client/') #add path to forces_pro files here ToDo make generic
-import helpers
+import harmony_mpcs.mpc_solver_generation.helpers as helpers
 
 # If your forces is in this directory add it
 helpers.load_forces_path()
@@ -22,15 +22,15 @@ import pickle
 import forcespro.nlp
 import copy
 
-import dynamics
-import objective
+import harmony_mpcs.mpc_solver_generation.dynamics as dynamics
+import harmony_mpcs.mpc_solver_generation.objective as objective
 
 #import generate_cpp_files
 
-import fixed_mpc_settings as settings
+import harmony_mpcs.mpc_solver_generation.fixed_mpc_settings as settings
 
 # Press the green button in the gutter to run the script.
-if __name__ == '__main__':
+def generate_solver(current_dir, save_dir):
 
     # Set to False to only generate C++ code
     generate_solver = True
@@ -166,16 +166,21 @@ if __name__ == '__main__':
         print("--- Generating solver ---")
 
         # Remove the previous solver
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        solver_path = dir_path + "/" + settings.robot_config.name + 'FORCESNLPsolver_fixed'
-        new_solver_path = dir_path + "/../" + settings.robot_config.name + 'FORCESNLPsolver_fixed'
+        solver_path = current_dir + "/" + settings.robot_config.name + 'FORCESNLPsolver_fixed/'
+        new_solver_path = save_dir + "/" + settings.robot_config.name + 'FORCESNLPsolver_fixed'
+        print(new_solver_path)
+
         #print("Path of the new solver: {}".format(new_solver_path))
         if os.path.exists(new_solver_path) and os.path.isdir(new_solver_path):
             shutil.rmtree(new_solver_path)
 
+        if not os.path.exists(new_solver_path):
+            os.makedirs(new_solver_path)
+
         # Creates code for symbolic model formulation given above, then contacts server to generate new solver
         #output1 = ("sol", [], [])
         generated_solver = solver.generate_solver(options) #, outputs
+
 
         # Move the solver up a directory for convenience
         if os.path.isdir(solver_path):
@@ -197,4 +202,6 @@ if __name__ == '__main__':
         with open(file_name, 'wb') as outp:
             pickle.dump(solver_property_dict, outp, pickle.HIGHEST_PROTOCOL)
 
-
+if __name__ == '__main__':
+    file_dir = os.path.dirname(os.path.realpath(__file__)) + "/../solvers"
+    generate_solver(save_dir=file_dir)

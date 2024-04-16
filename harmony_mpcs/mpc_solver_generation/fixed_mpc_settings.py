@@ -1,7 +1,7 @@
 import os
-import mpc_solver_generation.control_modules as control_modules
-import mpc_solver_generation.helpers as helpers
-from config.config import EnvConfig
+import harmony_mpcs.mpc_solver_generation.control_modules as control_modules
+import harmony_mpcs.mpc_solver_generation.helpers as helpers
+from harmony_mpcs.config.config import EnvConfig
 
 file_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(file_dir)
