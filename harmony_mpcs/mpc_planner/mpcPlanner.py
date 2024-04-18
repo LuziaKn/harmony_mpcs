@@ -100,14 +100,17 @@ class MPCPlanner(object):
                 self._params[k+self._map_runtime_par['agents_pos_r_1'][i]] = others_state[i]
             
     def setLinearConstraints(self, lin_constr, r_body):
-        pass
-        # for j in range(self._config.time_horizon):
-        #     self._params[self._npar * j + self._paramMap["r_body"][0]] = r_body
-        #     for i in range(self._config.number_obstacles):
-        #         for m in range(4):
-        #             idx = self._npar * j + self._paramMap["lin_constrs_" + str(i)][m]
-        #             self._params[idx] = lin_constr[j][i][m]
-    
+        for N_iter in range(self._N):
+            k = N_iter * self._npar
+            for disc_idx in range(1): #todo
+                name = "disc_"+ str(disc_idx)+"_linear_constraint"
+                self._params[k+self._map_runtime_par[name + "disc_r"][0]] = r_body
+                self._params[k+self._map_runtime_par[name + "disc_offset"][0]] = 0
+                self._params[k + self._map_runtime_par[name + "_a1"][0]] = lin_constr[N_iter][disc_idx][0]
+                self._params[k + self._map_runtime_par[name + "_a2"][0]] = lin_constr[N_iter][disc_idx][1]
+                self._params[k + self._map_runtime_par[name + "_b"][0]] = lin_constr[N_iter][disc_idx][-1]
+                
+
     def solve(self, obs):
 
         self._xinit = np.concatenate([obs['x'], obs['xdot']])
@@ -118,19 +121,20 @@ class MPCPlanner(object):
         self._preprocessor.preprocess(obs['x'], obs['lidar_point_cloud'], obs['trans_lidar'])
         self.setLinearConstraints(self._preprocessor._linear_constraints, r_body=0.5) #todo
 
+
         problem = {}
         problem["xinit"] = self._xinit
         problem["x0"] = self._x0.flatten()[:]
         problem["all_parameters"] = self._params
 
 
-        self._output, exitflag, info = self._solver.solve(problem)
+        self._output, self._exitflag, info = self._solver.solve(problem)
         self._output = output2array(self._output)
 
-        if exitflag <= 0:
-            print(exitflag)
+        if self._exitflag < 0:
+            print(self._exitflag)
 
-        if exitflag == 1 or exitflag == 0:
+        if self._exitflag == 1 or self._exitflag == 0:
             action = self._output[1,self._nu + self._nx-3:]
         else: action = np.array([0,0,0])
 

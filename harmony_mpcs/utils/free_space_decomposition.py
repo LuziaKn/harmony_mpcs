@@ -10,7 +10,7 @@ class HalfPlane(object):
     _constant: float
 
     def __init__(self, point: np.ndarray, position: np.ndarray):
-        self._normal_vector = position - point
+        self._normal_vector = point - position
         self._point = point
         self._constant = np.dot(self.normal(), point)
 
@@ -93,6 +93,7 @@ class FreeSpaceDecomposition(object):
         ):
             point = points[0]
             new_constraint = HalfPlane(point, self._position)
+            #print("new constraint: ", new_constraint.constraint())
             self._constraints.append(new_constraint)
             mask = np.apply_along_axis(
                 new_constraint.point_infront_plane, 1, points

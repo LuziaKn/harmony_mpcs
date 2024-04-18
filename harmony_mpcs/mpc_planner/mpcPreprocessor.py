@@ -26,7 +26,7 @@ class MPCPreprocessor(object):
         pos_lidar_2d = np.dot(rot_matrix, np.array([trans_lidar[0], trans_lidar[1]])) + robot_state[0:2]
         pos_lidar_3d = np.array([pos_lidar_2d[0], pos_lidar_2d[1], trans_lidar[2]])
 
-        print(pos_lidar_2d)
+        #print(pos_lidar_2d)
         #print(trans_lidar)
         #print(robot_state)
 
@@ -42,6 +42,7 @@ class MPCPreprocessor(object):
             self._linear_constraints.append(self._linear_constraints_j)
             halfplanes.append(halfplanes_j)
             self._closest_points = points_j
+ 
            
 
 

@@ -1,5 +1,4 @@
 import numpy as np
-import casadi
 import os, sys
 import casadi as ca
 
@@ -113,8 +112,11 @@ class WeightStructure:
 
 
 def rotation_matrix(angle):
-    return np.array([[casadi.cos(angle), -casadi.sin(angle)],
-                      [casadi.sin(angle), casadi.cos(angle)]])
+    cos = ca.cos(angle)
+    sin = ca.sin(angle)
+    return ca.vertcat(ca.horzcat(cos, -sin),
+                ca.horzcat(sin, cos))
+
 
 def approx_max(x, lamda=50):
     return (1 / lamda) * ca.log(ca.exp(lamda * x[0]) + ca.exp(lamda* x[1]))

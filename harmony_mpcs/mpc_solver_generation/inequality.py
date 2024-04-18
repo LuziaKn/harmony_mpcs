@@ -1,4 +1,4 @@
-import casadi
+import casadi as ca
 import numpy as np
 import harmony_mpcs.mpc_solver_generation.helpers as helpers
 
@@ -44,7 +44,7 @@ class LinearConstraints:
         self.num_constraints = num_constraints
         self.n_discs = n_discs
         self.params = params
-        self.name = "linear_obst"
+        self.name = "linear_constr"
 
         self.nh = (num_constraints) * n_discs
 
@@ -53,18 +53,20 @@ class LinearConstraints:
             params.add_parameter(self.constraint_name(disc) + "_a1" , num_constraints) # a1 a2 b
             params.add_parameter(self.constraint_name(disc) + "_a2" , num_constraints)  # a1 a2 b
             params.add_parameter(self.constraint_name(disc) + "_b" , num_constraints)  # a1 a2 b
+            params.add_parameter(self.constraint_name(disc)  + "disc_offset", 1)
+            params.add_parameter(self.constraint_name(disc)  + "disc_r", 1)
 
 
     def constraint_name(self, disc_idx):
         return "disc_"+str(disc_idx)+"_linear_constraint"
 
     def append_lower_bound(self, lower_bound):
-        for scenario in range(0, self.num_constraints):
+        for _ in range(0, self.num_constraints):
             for disc in range(0, self.n_discs):
                 lower_bound.append(-np.inf)
 
     def append_upper_bound(self, upper_bound):
-        for scenario in range(0, self.num_constraints):
+        for _ in range(0, self.num_constraints):
             for disc in range(0, self.n_discs):
                 upper_bound.append(0.0)
 
@@ -76,36 +78,28 @@ class LinearConstraints:
         u = z[0:model.nu]
 
         # States
-        pos = np.array([x[0], x[1]])
-        #slack = u[2]
+        pos = x[0:2]
         psi = x[2]
 
-
-        #pos2 = np.array([x[10], x[11]])
-        #pos3 = np.array([x[15], x[16]])
-
         rotation_car = helpers.rotation_matrix(psi)
-        for disc_it in range(0, self.n_discs):
-            disc_x = getattr(settings.params, "disc_offset")[disc_it]
-            disc_relative_pos = np.array([disc_x, 0])
-            disc_pos = pos #+ rotation_car.dot(disc_relative_pos)
+        for disc_idx in range(0, self.n_discs):
+            disc_x = getattr(settings.params, self.constraint_name(disc_idx) + "disc_offset")[0]
+            disc_relative_pos = ca.vertcat(disc_x, 0)
+            # dot for casadi
+            disc_pos = pos + rotation_car @ disc_relative_pos
 
             # A'x <= b
-            a1_all = getattr(settings.params, self.constraint_name(disc_it) + "_a1")
-            a2_all = getattr(settings.params, self.constraint_name(disc_it) + "_a2")
-            b_all= getattr(settings.params, self.constraint_name(disc_it) + "_b")
+            a1_all = getattr(settings.params, self.constraint_name(disc_idx) + "_a1")
+            a2_all = getattr(settings.params, self.constraint_name(disc_idx) + "_a2")
+            b_all= getattr(settings.params, self.constraint_name(disc_idx) + "_b")
             for constraint_it in range(0, int(self.num_constraints)):
                 a1 = a1_all[constraint_it]
                 a2 = a2_all[constraint_it]
                 b = b_all[constraint_it]
 
-                radius = getattr(settings.params, "disc_r")
-                #alpha = casadi.atan2(-a1,a2)
-                #h = radius/casadi.sin(alpha)
-                constraints.append(a1 * pos[0] + a2 * pos[1] - b)
-                #constraints.append(a1 * pos1[0] + a2 * pos1[1] - (b-h*a2))
-                #constraints.append(a1 * pos2[0] + a2 * pos2[1] - (b-h*a2))
-                #constraints.append(a1 * pos3[0] + a2 * pos3[1] - (b-h*a2))
+                radius = getattr(settings.params, self.constraint_name(disc_idx) + "disc_r")
+                constraints.append(a1 * pos[0] + a2 * pos[1] - b + radius)
+
 
 class InteractiveLinearConstraints:
 
@@ -155,7 +149,7 @@ class InteractiveLinearConstraints:
         for i in range(0, self.max_obstacles):
             id = i+1
             r_obst = getattr(settings.params, "other_agents_pos_r_" + str(i))[-1]
-            pos_obst = casadi.vertcat(x[id*5], x[id*5+1])
+            pos_obst = ca.vertcat(x[id*5], x[id*5+1])
             diff = pos - pos_obst
             dist = approx_norm(diff)
             diff_normalized = diff/dist
@@ -167,7 +161,7 @@ class InteractiveLinearConstraints:
             a_norm = approx_norm(a)
             a_normalized = a /a_norm
 
-            b = casadi.mtimes(a_normalized.T,point)
+            b = ca.mtimes(a_normalized.T,point)
 
             # ax-b<=0
             constraints.append(a_normalized[0] * pos[0] + a_normalized[1] * pos[1] - b)
@@ -223,10 +217,10 @@ class InteractiveEllipsoidConstraints:
         for i in range(0, self.max_obstacles):
             id = i+1
             r_obst = getattr(settings.params, "agents_pos_r_" + str(id))[-1]
-            pos_obst = casadi.vertcat(x[self.num_states_ego_agent + self.num_states_other_agent*(id-1)], x[self.num_states_ego_agent + self.num_states_other_agent*(id-1)+1])
+            pos_obst = ca.vertcat(x[self.num_states_ego_agent + self.num_states_other_agent*(id-1)], x[self.num_states_ego_agent + self.num_states_other_agent*(id-1)+1])
             diff = pos - pos_obst
             dist_approx = approx_norm(diff)
-            dist_lowerbound = dist_approx-casadi.sqrt(0.01)
+            dist_lowerbound = dist_approx-ca.sqrt(0.01)
 
 
 
@@ -449,12 +443,10 @@ class StaticLinearConstraints:
         return "disc_"+str(disc_idx)+"_fixed_linear_constraint_"+str(constraint_idx)
 
     def append_lower_bound(self, lower_bound):
-        for scenario in range(0, 2):
             for disc in range(0, self.n_discs):
                 lower_bound.append(0)
 
     def append_upper_bound(self, upper_bound):
-        for scenario in range(0, 2):
             for disc in range(0, self.n_discs):
                 upper_bound.append(casadi.inf)
 

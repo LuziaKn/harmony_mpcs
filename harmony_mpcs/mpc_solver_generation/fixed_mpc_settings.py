@@ -29,7 +29,7 @@ robot_config = config.RobotConfig
 module_selection = 1 # 1: GO-MPC
 
 if module_selection == 1:
-    use_linear_constraints = False
+    use_linear_constraints = True
     use_ellipsoid_constraints = False
     use_combined_dynamics = False
     use_interactive_linear_constraints = False
@@ -50,7 +50,7 @@ if use_ellipsoid_constraints or use_gaussian_constraints or use_interactive_line
 
 
 if use_linear_constraints:
-    n_static_constraints = 4
+    n_static_constraints = 1
 else: n_static_constraints = 0
 
 # --- SQP Settings --- #

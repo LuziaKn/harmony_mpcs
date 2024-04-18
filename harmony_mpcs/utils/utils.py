@@ -36,6 +36,6 @@ def compute_point_cloud(robot_state: np.ndarray, lidar_obs: np.ndarray, relative
             np.expand_dims(relative_positions[:,2],axis=1)),
             axis=1) + lidar_position
 
-    z_threshold = 0.2
+    z_threshold = 0.0
     absolute_positions_filtered = absolute_positions[absolute_positions[:,2]>=z_threshold]
     return absolute_positions_filtered
