@@ -79,8 +79,8 @@ class RobotConfig:
         self.lower_bound['a_y'] = -0.5
         self.upper_bound['a_y'] = 0.5
 
-        self.lower_bound['alpha'] = -0.5
-        self.upper_bound['alpha'] = 0.5
+        self.lower_bound['alpha'] = -1
+        self.upper_bound['alpha'] = 1
 
 
 

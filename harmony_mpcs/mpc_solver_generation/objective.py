@@ -57,6 +57,13 @@ class FixedMPCObjective:
 
         speed = ca.norm_2(x[3:5])
 
+        # get ego speed
+        # theta_rad = psi
+        # R = np.array([[np.cos(theta_rad), np.sin(theta_rad)],
+        #     [-np.sin(theta_rad), np.cos(theta_rad)]])
+    
+        # vel_ego = np.dot(R, x[3:5])
+
         # Parameters
         initial_pose = getattr(settings.params, "initial_pose")
  
@@ -76,10 +83,10 @@ class FixedMPCObjective:
         goal_dist_error_normalized = goal_dist_error/initial_goal_dist_error    
 
         # derive velocity vector angle
-        vel_orientation = ca.if_else(speed > 0.1, ca.atan2(ca.fmax(v_y,0.01),v_x), goal_orientation)
+        vel_orientation = ca.if_else(speed > 0.1, ca.atan2(v_y,v_x), goal_orientation)
 
-        goal_orientation_error = get_min_angle_between_vec(psi,goal_orientation) / get_min_angle_between_vec(initial_pose[2],goal_orientation)
-        vel_orientation_error = get_min_angle_between_vec(psi,vel_orientation) / get_min_angle_between_vec(initial_pose[2],goal_orientation)
+        goal_orientation_error = get_min_angle_between_vec(psi,goal_orientation) / (get_min_angle_between_vec(initial_pose[2],goal_orientation) + 0.01)
+        vel_orientation_error = get_min_angle_between_vec(psi,vel_orientation)/ (get_min_angle_between_vec(initial_pose[2],goal_orientation) + 0.01)
 
         dist_threshold = 0.5
 
@@ -87,9 +94,9 @@ class FixedMPCObjective:
            
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self.config.MPCConfig.FORCES_N + 1:
-                cost = Wgoal_position * goal_dist_error_normalized + (1-switch_orientation) * Wgoal_orientation * goal_orientation_error + switch_orientation * Wgoal_orientation* vel_orientation_error
+                cost = Wgoal_position * goal_dist_error_normalized  + Wgoal_orientation * goal_orientation_error
             else:
-                cost =   Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y
+                cost =  +  Wvel_orientation * vel_orientation_error+  Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y
         else:
             print("not implemented yet")
 

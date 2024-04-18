@@ -4,12 +4,16 @@ import pickle
 import forcespro
 
 from harmony_mpcs.utils.utils import output2array
+from harmony_mpcs.mpc_planner.mpcPreprocessor import MPCPreprocessor
+
 
 class MPCPlanner(object):
 
     def __init__(self, solverDir, solverName, config):
 
         self._config = config
+        
+
         self._solverFile = (
             solverDir
             + solverName
@@ -45,6 +49,10 @@ class MPCPlanner(object):
         self._N = self._properties['N']
         self._output = np.zeros((self._N, self._nx + self._nu))
 
+        self._preprocessor = MPCPreprocessor(config, self._N)
+
+        
+
     def reset(self):
         self._initial_step = True
 
@@ -76,8 +84,6 @@ class MPCPlanner(object):
                     self._params[k+self._map_runtime_par[key][0]] = self._config['weights'][key]
                 except Exception as e:
                     print(f"An error occurred: {e}")
-            
-        
 
     def setParams(self, obs):
         for N_iter in range(self._N):
@@ -93,7 +99,14 @@ class MPCPlanner(object):
             for i in range(len(others_state)):
                 self._params[k+self._map_runtime_par['agents_pos_r_1'][i]] = others_state[i]
             
-
+    def setLinearConstraints(self, lin_constr, r_body):
+        pass
+        # for j in range(self._config.time_horizon):
+        #     self._params[self._npar * j + self._paramMap["r_body"][0]] = r_body
+        #     for i in range(self._config.number_obstacles):
+        #         for m in range(4):
+        #             idx = self._npar * j + self._paramMap["lin_constrs_" + str(i)][m]
+        #             self._params[idx] = lin_constr[j][i][m]
     
     def solve(self, obs):
 
@@ -102,6 +115,8 @@ class MPCPlanner(object):
 
         self.setX0(initialize_type="current_state", initial_step=self._initial_step)
         self.setParams(obs)
+        self._preprocessor.preprocess(obs['x'], obs['lidar_point_cloud'], obs['trans_lidar'])
+        self.setLinearConstraints(self._preprocessor._linear_constraints, r_body=0.5) #todo
 
         problem = {}
         problem["xinit"] = self._xinit
@@ -126,4 +141,4 @@ class MPCPlanner(object):
         self._action, output = self.solve(obs)
 
         # print('action: ', self._action)
-        return self._action, output #, exitflag, self.vel_limit
+        return self._action, output, self._preprocessor._linear_constraints , self._preprocessor._closest_points#, exitflag, self.vel_limit
