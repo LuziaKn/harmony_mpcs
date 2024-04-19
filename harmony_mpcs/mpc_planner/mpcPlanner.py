@@ -32,8 +32,6 @@ class MPCPlanner(object):
                 self._modules = data['modules']
             except FileNotFoundError:
                 print(f"File {params_file_path} not found.")
-            except pickle.UnpicklingError:
-                print(f"Error occurred while unpickling {params_file_path}.")
             except Exception as e:
                 print(f"An error occurred: {e}")
         
