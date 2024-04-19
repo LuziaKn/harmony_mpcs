@@ -1,14 +1,24 @@
 import os
+import yaml
 import harmony_mpcs.mpc_solver_generation.control_modules as control_modules
 import harmony_mpcs.mpc_solver_generation.helpers as helpers
-from harmony_mpcs.config.config import EnvConfig
+
+class SolverGenerator(object):
+
+    def __init__(self, config_file_name: str):
+        self._config_path = config_file_name
+        # load yaml file
+        with open(self.config_path, 'r') as stream:
+            try:
+                config = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
 
 file_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(file_dir)
 
-config = EnvConfig(parent_dir + "/config/config.yaml")
 N = config.MPCConfig.FORCES_N               # MPC Horizon
-integrator_stepsize = config.DT  # Timestep of the integrator
+integrator_stepsize = config.time_step  # Timestep of the integrator
 n_discs = 1
 n_agents_mpc = config.MPCConfig.N_AGENTS_MPC
 n_other_agents = n_agents_mpc-1

@@ -71,7 +71,7 @@ class LinearConstraints:
                 upper_bound.append(0.0)
 
     def append_constraints(self, constraints, z, param, settings, model):
-        settings.params.load_params(param)
+        settings._params.load_params(param)
 
         # Retrieve variables
         x = z[model.nu:model.nu + model.nx]
@@ -83,21 +83,21 @@ class LinearConstraints:
 
         rotation_car = helpers.rotation_matrix(psi)
         for disc_idx in range(0, self.n_discs):
-            disc_x = getattr(settings.params, self.constraint_name(disc_idx) + "disc_offset")[0]
+            disc_x = getattr(settings._params, self.constraint_name(disc_idx) + "disc_offset")[0]
             disc_relative_pos = ca.vertcat(disc_x, 0)
             # dot for casadi
             disc_pos = pos + rotation_car @ disc_relative_pos
 
             # A'x <= b
-            a1_all = getattr(settings.params, self.constraint_name(disc_idx) + "_a1")
-            a2_all = getattr(settings.params, self.constraint_name(disc_idx) + "_a2")
-            b_all= getattr(settings.params, self.constraint_name(disc_idx) + "_b")
+            a1_all = getattr(settings._params, self.constraint_name(disc_idx) + "_a1")
+            a2_all = getattr(settings._params, self.constraint_name(disc_idx) + "_a2")
+            b_all= getattr(settings._params, self.constraint_name(disc_idx) + "_b")
             for constraint_it in range(0, int(self.num_constraints)):
                 a1 = a1_all[constraint_it]
                 a2 = a2_all[constraint_it]
                 b = b_all[constraint_it]
 
-                radius = getattr(settings.params, self.constraint_name(disc_idx) + "disc_r")
+                radius = getattr(settings._params, self.constraint_name(disc_idx) + "disc_r")
                 constraints.append(a1 * pos[0] + a2 * pos[1] - b + radius)
 
 
@@ -134,7 +134,7 @@ class InteractiveLinearConstraints:
                 upper_bound.append(0.0)
 
     def append_constraints(self,constraints, z, param, settings, model):
-        settings.params.load_params(param)
+        settings._params.load_params(param)
 
         # Retrieve variables
         x = z[model.nu:model.nu + model.nx]
@@ -143,12 +143,12 @@ class InteractiveLinearConstraints:
         # States
         pos = x[:2]
 
-        r_robot = getattr(settings.params, 'disc_r')
+        r_robot = getattr(settings._params, 'disc_r')
 
 
         for i in range(0, self.max_obstacles):
             id = i+1
-            r_obst = getattr(settings.params, "other_agents_pos_r_" + str(i))[-1]
+            r_obst = getattr(settings._params, "other_agents_pos_r_" + str(i))[-1]
             pos_obst = ca.vertcat(x[id*5], x[id*5+1])
             diff = pos - pos_obst
             dist = approx_norm(diff)
@@ -202,7 +202,7 @@ class InteractiveEllipsoidConstraints:
                 upper_bound.append(0.0)
 
     def append_constraints(self,constraints, z, param, settings, model):
-        settings.params.load_params(param)
+        settings._params.load_params(param)
 
         # Retrieve variables
         x = z[model.nu:model.nu + model.nx]
@@ -211,12 +211,12 @@ class InteractiveEllipsoidConstraints:
         # States
         pos = x[:2]
 
-        r_robot = getattr(settings.params, 'disc_r')
+        r_robot = getattr(settings._params, 'disc_r')
 
 
         for i in range(0, self.max_obstacles):
             id = i+1
-            r_obst = getattr(settings.params, "agents_pos_r_" + str(id))[-1]
+            r_obst = getattr(settings._params, "agents_pos_r_" + str(id))[-1]
             pos_obst = ca.vertcat(x[self.num_states_ego_agent + self.num_states_other_agent*(id-1)], x[self.num_states_ego_agent + self.num_states_other_agent*(id-1)+1])
             diff = pos - pos_obst
             dist_approx = approx_norm(diff)
@@ -265,7 +265,7 @@ class InteractiveGaussianEllipsoidConstraints:
                 upper_bound.append(np.inf)
 
     def append_constraints(self,constraints, z, param, settings, model):
-        settings.params.load_params(param)
+        settings._params.load_params(param)
 
         # Retrieve variables
         x = z[model.nu:model.nu + model.nx]
@@ -274,20 +274,20 @@ class InteractiveGaussianEllipsoidConstraints:
         # States
         pos = x[:2]
 
-        r_robot = getattr(settings.params, 'disc_r')
+        r_robot = getattr(settings._params, 'disc_r')
 
-        sigma_x = getattr(settings.params, "sigma_x")
-        sigma_y = getattr(settings.params, "sigma_y")
+        sigma_x = getattr(settings._params, "sigma_x")
+        sigma_y = getattr(settings._params, "sigma_y")
         Sigma = casadi.diag(casadi.vertcat(sigma_x**2, sigma_y**2))
 
-        epsilon = getattr(settings.params, "epsilon")
+        epsilon = getattr(settings._params, "epsilon")
 
         approx_epsilon = 0.001
 
 
         for i in range(0, self.max_obstacles):
             id = i+1
-            r_obst = getattr(settings.params, "agents_pos_r_" + str(id))[-1]
+            r_obst = getattr(settings._params, "agents_pos_r_" + str(id))[-1]
             pos_obst = casadi.vertcat(x[self.num_states_ego_agent + self.num_states_other_agent*(id-1)], x[self.num_states_ego_agent + self.num_states_other_agent*(id-1)+1])
             diff = pos - pos_obst
 
@@ -340,7 +340,7 @@ class FixedEllipsoidConstraints:
                 upper_bound.append(0.0)
 
     def append_constraints(self,constraints, z, param, settings, model):
-        settings.params.load_params(param)
+        settings._params.load_params(param)
 
         # Retrieve variables
         x = z[model.nu:model.nu + model.nx]
@@ -349,13 +349,13 @@ class FixedEllipsoidConstraints:
         # States
         pos = x[:2]
 
-        r_robot = getattr(settings.params, 'disc_r')
+        r_robot = getattr(settings._params, 'disc_r')
 
 
         for i in range(0, self.max_obstacles):
             id = i+1
-            r_obst = getattr(settings.params, "agents_pos_r_" + str(id))[-1]
-            pos_obst = getattr(settings.params, "agents_pos_r_" + str(id))[:2]
+            r_obst = getattr(settings._params, "agents_pos_r_" + str(id))[-1]
+            pos_obst = getattr(settings._params, "agents_pos_r_" + str(id))[:2]
             diff = pos - pos_obst
             dist = casadi.sqrt(diff[0]**2 + diff[1]**2)
 
@@ -392,7 +392,7 @@ class FixedLinearConstraints:
                 upper_bound.append(0.0)
 
     def append_constraints(self,constraints, z, param, settings, model):
-        settings.params.load_params(param)
+        settings._params.load_params(param)
 
         # Retrieve variables
         x = z[model.nu:model.nu + model.nx]
@@ -404,13 +404,13 @@ class FixedLinearConstraints:
         speed = x[3]
 
 
-        r_robot = getattr(settings.params, 'disc_r')
+        r_robot = getattr(settings._params, 'disc_r')
 
 
         for disc_id in range(self.n_discs):
             for i in range(self.max_obstacles):
-                r_obst = getattr(settings.params, "agents_pos_r_" + str(i+1))[-1]
-                pos_obst = getattr(settings.params, "agents_pos_r_" + str(i+1))[:2]#getattr(settings.params,self.constraint_name(disc_id, i) + "_predictions")
+                r_obst = getattr(settings._params, "agents_pos_r_" + str(i+1))[-1]
+                pos_obst = getattr(settings._params, "agents_pos_r_" + str(i+1))[:2]#getattr(settings.params,self.constraint_name(disc_id, i) + "_predictions")
                 diff = pos - pos_obst
                 diff_norm = approx_norm(diff)
                 diff_normalized = diff/ diff_norm
@@ -451,7 +451,7 @@ class StaticLinearConstraints:
                 upper_bound.append(casadi.inf)
 
     def append_constraints(self,constraints, z, param, settings, model):
-        settings.params.load_params(param)
+        settings._params.load_params(param)
 
         # Retrieve variables
         x = z[model.nu:model.nu + model.nx]
@@ -463,7 +463,7 @@ class StaticLinearConstraints:
         speed = x[3]
 
 
-        r_robot = getattr(settings.params, 'disc_r')
+        r_robot = getattr(settings._params, 'disc_r')
 
         linear_constraints = [casadi.vertcat(0, 1, -1, 0), casadi.vertcat(0, -1, -1, 0)]
         for disc_id in range(self.n_discs):
@@ -521,7 +521,7 @@ class FixedGaussianEllipsoidConstraints:
                 upper_bound.append(np.inf)
 
     def append_constraints(self,constraints, z, param, settings, model):
-        settings.params.load_params(param)
+        settings._params.load_params(param)
 
         # Retrieve variables
         x = z[model.nu:model.nu + model.nx]
@@ -530,7 +530,7 @@ class FixedGaussianEllipsoidConstraints:
         # States
         pos = x[:2]
 
-        r_robot = getattr(settings.params, 'disc_r')
+        r_robot = getattr(settings._params, 'disc_r')
 
         # Retrieve covariance
         sigma_x = getattr(settings.params, "sigma_x")

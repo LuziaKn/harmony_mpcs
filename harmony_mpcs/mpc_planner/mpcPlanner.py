@@ -9,9 +9,10 @@ from harmony_mpcs.mpc_planner.mpcPreprocessor import MPCPreprocessor
 
 class MPCPlanner(object):
 
-    def __init__(self, solverDir, solverName, config):
+    def __init__(self, solverDir, solverName, config, robot_config):
 
         self._config = config
+        self._robot_config = robot_config
         
 
         self._solverFile = (
@@ -43,11 +44,13 @@ class MPCPlanner(object):
             print("FAILED TO LOAD SOLVER")
             raise e
         
+        self._robot_radius = self._robot_config['radius']
         self._nx = self._properties['nx']
         self._nu = self._properties['nu']
         self._npar = self._properties['npar']
         self._N = self._properties['N']
         self._output = np.zeros((self._N, self._nx + self._nu))
+        print(self._map_runtime_par)
 
         self._preprocessor = MPCPreprocessor(config, self._N)
 
@@ -95,9 +98,9 @@ class MPCPlanner(object):
                 self._params[k+self._map_runtime_par['initial_pose'][i]] = self._xinit[i]
             self._params[k+self._map_runtime_par['goal_orientation'][0]] = obs['goal']['orientation']
             #self._params[k+self._map_runtime_par['disc_r'][0]] = 0.4
-            others_state = np.array([-10, -10, 0, 0, 0, 0.25])
-            for i in range(len(others_state)):
-                self._params[k+self._map_runtime_par['agents_pos_r_1'][i]] = others_state[i]
+            # others_state = np.array([-10, -10, 0, 0, 0, 0.25])
+            # for i in range(len(others_state)):
+            #     self._params[k+self._map_runtime_par['agents_pos_r_1'][i]] = others_state[i]
             
     def setLinearConstraints(self, lin_constr, r_body):
         for N_iter in range(self._N):
@@ -119,7 +122,8 @@ class MPCPlanner(object):
         self.setX0(initialize_type="current_state", initial_step=self._initial_step)
         self.setParams(obs)
         self._preprocessor.preprocess(obs['x'], obs['lidar_point_cloud'], obs['trans_lidar'])
-        self.setLinearConstraints(self._preprocessor._linear_constraints, r_body=0.5) #todo
+        name = "disc_"+ str(0)+"_linear_constraint"
+        self.setLinearConstraints(self._preprocessor._linear_constraints, r_body=self._robot_radius) #todo
 
 
         problem = {}

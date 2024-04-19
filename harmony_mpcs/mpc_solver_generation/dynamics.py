@@ -56,8 +56,9 @@ class DynamicModel:
         self.robot_config = robot_config
 
     def __str__(self):
+        print(self.robot_config)
         result = 'Dynamical Model: ' + str(type(self)) + '\n' +\
-               'System: ' + str(self.robot_config.name) + '\n'
+               'System: ' + str(self.robot_config['robot_name']) + '\n'
 
         if hasattr(self, 'interfaces'):
             result += 'Interfaces: '
@@ -76,10 +77,10 @@ class DynamicModel:
         result = np.array([])
 
         for input in self.inputs:
-            result = np.append(result, self.robot_config.upper_bound[input])
+            result = np.append(result, self.robot_config['input_constraints']['upper_bounds'][input])
 
         for state in self.states:
-            result = np.append(result, self.robot_config.upper_bound[state])
+            result = np.append(result, self.robot_config['state_constraints']['upper_bounds'][state])
 
         return result
 
@@ -88,10 +89,10 @@ class DynamicModel:
         result = np.array([])
 
         for input in self.inputs:
-            result = np.append(result, self.robot_config.lower_bound[input])
+            result = np.append(result, self.robot_config['input_constraints']['lower_bounds'][input])
 
         for state in self.states:
-            result = np.append(result, self.robot_config.lower_bound[state])
+            result = np.append(result, self.robot_config['state_constraints']['lower_bounds'][state])
 
         return result
 
