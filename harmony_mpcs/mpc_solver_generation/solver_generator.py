@@ -133,7 +133,7 @@ class SolverGenerator(object):
         # save settings
         solver_property_dict = {}
         properties = {"nx": self._solver.neq, "nu": self._model.nu, "npar": self._solver.npar, "N":self._solver.N,
-                      "n_static_obstacles": self.solver_settings._n_other_agents, "n_discs": self.solver_settings._n_discs,
+                      "n_static_obstacles": self.solver_settings._n_dynamic_obst, "n_discs": self.solver_settings._n_discs,
                       "n_static_constraints": self.solver_settings._n_static_obst}
 
         solver_property_dict['map_runtime_par'] = self.solver_settings._params.save()

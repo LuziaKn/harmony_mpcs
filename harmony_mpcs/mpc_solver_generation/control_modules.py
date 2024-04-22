@@ -114,41 +114,14 @@ class EllipsoidalConstraintModule(Module):
     Linear constraints for scenario-based motion planning
     """
 
-    def __init__(self, params, n_discs, max_obstacles):
+    def __init__(self, params, n_discs, n_obst):
         self.module_name = "EllipsoidalConstraints"  # Needs to correspond to the c++ name of the module
         self.import_name = "modules_constraints/ellipsoidal_constraints.h"
         self.type = "constraint"
 
         self.constraints = []
-        self.constraints.append(inequality.FixedEllipsoidConstraints(params,n_discs, max_obstacles))
+        self.constraints.append(inequality.FixedEllipsoidConstraints(params,n_discs, n_obst))
 
-class GaussianEllipsoidalConstraintModule(Module):
-
-    """
-    Linear constraints for scenario-based motion planning
-    """
-
-    def __init__(self, params, n_discs, max_obstacles, num_constraints):
-        self.module_name = "EllipsoidalConstraints"  # Needs to correspond to the c++ name of the module
-        self.import_name = "modules_constraints/ellipsoidal_constraints.h"
-        self.type = "constraint"
-
-        self.constraints = []
-        self.constraints.append(inequality.FixedGaussianEllipsoidConstraints(params,n_discs, max_obstacles, num_constraints))
-
-class MultiEllipsoidalConstraintModule(Module):
-
-    """
-    Linear constraints for scenario-based motion planning
-    """
-
-    def __init__(self, params, n_discs, max_obstacles):
-        self.module_name = "MultiEllipsoidalConstraints"  # Needs to correspond to the c++ name of the module
-        self.import_name = "modules_constraints/ellipsoidal_constraints.h"
-        self.type = "constraint"
-
-        self.constraints = []
-        self.constraints.append(inequality.MultiEllipsoidConstraints(n_discs, max_obstacles, params))
 
 class LinearConstraintModule(Module):
 
@@ -156,13 +129,13 @@ class LinearConstraintModule(Module):
     Linear constraints for scenario-based motion planning
     """
 
-    def __init__(self, params, n_discs, num_constraints, horizon_length):
+    def __init__(self, params, n_discs, n_obst, horizon_length):
         self.module_name = "TOBEDEFINED"  # Needs to correspond to the c++ name of the module
         self.import_name = "TOBEDEFINED"
         self.type = "constraint"
 
         self.constraints = []
-        self.constraints.append(inequality.LinearConstraints(params,n_discs, num_constraints))
+        self.constraints.append(inequality.LinearConstraints(params,n_discs, n_obst))
 
 
 class InteractiveLinearConstraintModule(Module):

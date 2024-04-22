@@ -40,34 +40,34 @@ class Constraints:
 
 class LinearConstraints:
 
-    def __init__(self, params, n_discs, num_constraints):
-        self.num_constraints = num_constraints
-        self.n_discs = n_discs
+    def __init__(self, params, n_discs, n_obst):
+        self._n_obst = n_obst
+        self._n_discs = n_discs
         self.params = params
         self.name = "linear_constr"
 
-        self.nh = (num_constraints) * n_discs
+        self.nh = (self._n_obst) * n_discs
 
         # @Todo: Be able to add multiple sets of constraints
-        for disc in range(n_discs):
-            params.add_parameter(self.constraint_name(disc) + "_a1" , num_constraints) # a1 a2 b
-            params.add_parameter(self.constraint_name(disc) + "_a2" , num_constraints)  # a1 a2 b
-            params.add_parameter(self.constraint_name(disc) + "_b" , num_constraints)  # a1 a2 b
-            params.add_parameter(self.constraint_name(disc)  + "disc_offset", 1)
-            params.add_parameter(self.constraint_name(disc)  + "disc_r", 1)
+        for obst_id in range(self._n_obst):
+            params.add_parameter(self.constraint_name(obst_id) + "_a1" , self._n_obst) # a1 a2 b
+            params.add_parameter(self.constraint_name(obst_id) + "_a2" , self._n_obst)  # a1 a2 b
+            params.add_parameter(self.constraint_name(obst_id) + "_b" , self._n_obst)  # a1 a2 b
+            params.add_parameter(self.constraint_name(obst_id)  + "disc_offset", 1)
+            params.add_parameter(self.constraint_name(obst_id)  + "disc_r", 1)
 
 
-    def constraint_name(self, disc_idx):
-        return "disc_"+str(disc_idx)+"_linear_constraint"
+    def constraint_name(self, obst_id):
+        return "linear_constraint_" + str(obst_id)
 
     def append_lower_bound(self, lower_bound):
-        for _ in range(0, self.num_constraints):
-            for disc in range(0, self.n_discs):
+        for _ in range(0, self._n_obst):
+            for disc in range(0, self._n_discs):
                 lower_bound.append(-np.inf)
 
     def append_upper_bound(self, upper_bound):
-        for _ in range(0, self.num_constraints):
-            for disc in range(0, self.n_discs):
+        for _ in range(0, self._n_obst):
+            for disc in range(0, self._n_discs):
                 upper_bound.append(0.0)
 
     def append_constraints(self, constraints, z, param, settings, model):
@@ -82,23 +82,22 @@ class LinearConstraints:
         psi = x[2]
 
         rotation_car = helpers.rotation_matrix(psi)
-        for disc_idx in range(0, self.n_discs):
-            disc_x = getattr(settings._params, self.constraint_name(disc_idx) + "disc_offset")[0]
-            disc_relative_pos = ca.vertcat(disc_x, 0)
-            # dot for casadi
-            disc_pos = pos + rotation_car @ disc_relative_pos
-
+        for obst_id in range(self._n_obst):
             # A'x <= b
-            a1_all = getattr(settings._params, self.constraint_name(disc_idx) + "_a1")
-            a2_all = getattr(settings._params, self.constraint_name(disc_idx) + "_a2")
-            b_all= getattr(settings._params, self.constraint_name(disc_idx) + "_b")
-            for constraint_it in range(0, int(self.num_constraints)):
-                a1 = a1_all[constraint_it]
-                a2 = a2_all[constraint_it]
-                b = b_all[constraint_it]
+            a1_all = getattr(settings._params, self.constraint_name(obst_id) + "_a1")
+            a2_all = getattr(settings._params, self.constraint_name(obst_id) + "_a2")
+            b_all= getattr(settings._params, self.constraint_name(obst_id) + "_b")
+            for disc in range(self._n_discs):
+                disc_x = getattr(settings._params, self.constraint_name(obst_id) + "disc_offset")[0]
+                disc_relative_pos = ca.vertcat(disc_x, 0)
+                disc_pos = pos + rotation_car @ disc_relative_pos
 
-                radius = r_robot = getattr(settings._params, "disc_" + str(disc_idx) + "_r")
-                constraints.append(a1 * pos[0] + a2 * pos[1] - b + radius)
+                a1 = a1_all[disc]
+                a2 = a2_all[disc]
+                b = b_all[disc]
+
+                disc_r = getattr(settings._params, "disc_" + str(disc) + "_r")
+                constraints.append(a1 * pos[0] + a2 * pos[1] - b + disc_r)
 
 
 
@@ -193,13 +192,12 @@ class FixedLinearConstraints:
         self.nh = self.max_obstacles * n_discs
         self.name = "fixed_linear_obst"
 
-        for disc in range(n_discs):
-            for obst_id in range(0, max_obstacles):
-                    params.add_parameter(self.constraint_name(disc, obst_id) + "_predictions", 2)
+        for obst_id in range(0, max_obstacles):
+            params.add_parameter(self.constraint_name(obst_id) + "_predictions", 2)
 
 
     def constraint_name(self, disc_idx, constraint_idx):
-        return "disc_"+str(disc_idx)+"_fixed_linear_constraint_"+str(constraint_idx)
+        return "linear_constraint_"+str(constraint_idx)
 
     def append_lower_bound(self, lower_bound):
         for scenario in range(0, self.max_obstacles):
@@ -259,8 +257,8 @@ class StaticLinearConstraints:
         self.name = "fixed_linear_obst"
 
 
-    def constraint_name(self, disc_idx, constraint_idx):
-        return "disc_"+str(disc_idx)+"_fixed_linear_constraint_"+str(constraint_idx)
+    def constraint_name(self, constraint_idx):
+        return "linear_constraint_"+str(constraint_idx)
 
     def append_lower_bound(self, lower_bound):
             for disc in range(0, self.n_discs):
@@ -305,269 +303,4 @@ class StaticLinearConstraints:
                 #constraints.append(a_normalized[0] * pos[0] + a_normalized[1] * pos[1] - b)
                 constraints.append(diff_point_pos_norm-r_robot)
 
-
-class FixedGaussianEllipsoidConstraints:
-
-    def __init__(self, params, n_discs, max_obstacles, num_constraints):
-
-        self.max_obstacles = max_obstacles
-        self.n_discs = n_discs
-        self.name = "fixed_ellipsoid_obst"
-
-        self.nh = self.max_obstacles * n_discs
-
-        params.add_parameter("sigma_x")
-        params.add_parameter("sigma_y")
-        params.add_parameter("epsilon")
-
-        for disc in range(n_discs):
-            for obst_id in range(0, max_obstacles+1):
-                if num_constraints>0:
-                    params.add_parameter(self.constraint_name(disc, obst_id) + "_closest_points_x", num_constraints)
-                    params.add_parameter(self.constraint_name(disc, obst_id) + "_closest_points_y", num_constraints)
-
-
-    def constraint_name(self, disc_idx, obst_id):
-        return "disc_"+str(disc_idx)+"_fixed_ellipsoid_constraint_agent_" + str(obst_id)
-
-    def append_lower_bound(self, lower_bound):
-        for scenario in range(0, self.max_obstacles):
-            for disc in range(0, self.n_discs):
-                lower_bound.append(0.)
-
-    def append_upper_bound(self, upper_bound):
-        for scenario in range(0, self.max_obstacles):
-            for disc in range(0, self.n_discs):
-                upper_bound.append(np.inf)
-
-    def append_constraints(self,constraints, z, param, settings, model):
-        settings._params.load_params(param)
-
-        # Retrieve variables
-        x = z[model.nu:model.nu + model.nx]
-        u = z[0:model.nu]
-
-        # States
-        pos = x[:2]
-
-        r_robot = getattr(settings._params, 'disc_r')
-
-        # Retrieve covariance
-        sigma_x = getattr(settings.params, "sigma_x")
-        sigma_y = getattr(settings.params, "sigma_y")
-        Sigma = casadi.diag(casadi.vertcat(sigma_x**2, sigma_y**2))
-
-        epsilon = getattr(settings.params, "epsilon")
-        approx_epsilon =0.01
-
-        for disc_id in range(self.n_discs):
-            for i in range(self.max_obstacles):
-                r_obst = getattr(settings.params, "agents_pos_r_" + str(i+1))[-1]
-                pos_obst = getattr(settings.params, "agents_pos_r_" + str(i+1))[:2]#getattr(settings.params,self.constraint_name(disc_id, i) + "_predictions")
-                diff = pos_obst-pos
-                diff = pos - pos_obst
-
-                combined_radius = r_obst + r_robot
-
-                a_ij = diff / approx_norm(diff)
-
-                b_ij = combined_radius
-
-                x_erfinv = 1. - 2. * epsilon
-
-                z = casadi.sqrt(-casadi.log((1.0 - x_erfinv) / 2.0))
-                # Manual inverse erf, because somehow lacking from casadi...
-                # From here: http: // casadi.sourceforge.net / v1.9.0 / api / internal / d4 / d99 / casadi__calculus_8hpp_source.html  # l00307
-                y_erfinv = (((1.641345311 * z + 3.429567803) * z - 1.624906493) * z - 1.970840454) / \
-                           ((1.637067800 * z + 3.543889200) * z + 1.0)
-                y_erfinv = y_erfinv - (casadi.erf(y_erfinv) - x_erfinv) / (
-                        2.0 / casadi.sqrt(casadi.pi) * casadi.exp(-(y_erfinv * y_erfinv)))
-                y_erfinv = y_erfinv - (casadi.erf(y_erfinv) - x_erfinv) / (
-                        2.0 / casadi.sqrt(casadi.pi) * casadi.exp(-(y_erfinv * y_erfinv)))
-
-                constraints.append(a_ij.T @ casadi.SX(diff) - b_ij - y_erfinv * casadi.sqrt(
-                    2. * a_ij.T @ Sigma @ a_ij+approx_epsilon) )
-# class EllipsoidConstraints:
-#
-#     def __init__(self, n_discs, max_obstacles, params, rotation_clockwise=True):
-#         self.max_obstacles = max_obstacles
-#         self.n_discs = n_discs
-#
-#         self.nh = max_obstacles * n_discs
-#
-#         # Add parameters
-#         for obs_id in range(max_obstacles):
-#             params.add_parameter("ellipsoid_obst_" + str(obs_id) + "_x")
-#             params.add_parameter("ellipsoid_obst_" + str(obs_id) + "_y")
-#             params.add_parameter("ellipsoid_obst_" + str(obs_id) + "_psi")
-#             params.add_parameter("ellipsoid_obst_" + str(obs_id) + "_major")
-#             params.add_parameter("ellipsoid_obst_" + str(obs_id) + "_minor")
-#             params.add_parameter("ellipsoid_obst_" + str(obs_id) + "_chi")
-#             params.add_parameter("ellipsoid_obst_" + str(obs_id) + "_r")
-#
-#
-#
-#         self.rotation_clockwise = rotation_clockwise
-#
-#     def append_lower_bound(self, lower_bound):
-#         for obs in range(0, self.max_obstacles):
-#             for disc in range(0, self.n_discs):
-#                 lower_bound.append(1.0)
-#
-#     def append_upper_bound(self, upper_bound):
-#         for obs in range(0, self.max_obstacles):
-#             for disc in range(0, self.n_discs):
-#                 upper_bound.append(np.Inf)
-#
-#     def append_constraints(self, constraints, z, param, settings, model):
-#
-#         settings.params.load_params(param)
-#
-#         # Retrieve variables
-#         x = z[model.nu:model.nu + model.nx]
-#         u = z[0:model.nu]
-#
-#         # States
-#         pos = np.array([x[0], x[1]])
-#         psi = x[2]
-#         slack = u[-1]
-#
-#         rotation_car = helpers.rotation_matrix(psi)
-#
-#         r_disc = getattr(settings.params, 'disc_r') #param[self.start_param]
-#
-#         # Constraint for dynamic obstacles
-#         for obstacle_it in range(0, self.max_obstacles):
-#             # Retrieve parameters
-#             obst_x = getattr(settings.params, "ellipsoid_obst_" + str(obstacle_it) + "_x")
-#             obst_y = getattr(settings.params, "ellipsoid_obst_" + str(obstacle_it) + "_y")
-#             obst_psi = getattr(settings.params, "ellipsoid_obst_" + str(obstacle_it) + "_psi")
-#             obst_major = getattr(settings.params, "ellipsoid_obst_" + str(obstacle_it) + "_major")
-#             obst_minor = getattr(settings.params, "ellipsoid_obst_" + str(obstacle_it) + "_minor")
-#             obst_r = getattr(settings.params, "ellipsoid_obst_" + str(obstacle_it) + "_r")
-#
-#             # multiplier for the risk when obst_major, obst_major only denote the covariance
-#             # (i.e., the smaller the risk, the larger the ellipsoid).
-#             # This value should already be a multiplier (using exponential cdf).
-#             chi = getattr(settings.params, "ellipsoid_obst_" + str(obstacle_it) + "_chi")
-#
-#             # obstacle computations
-#             obstacle_cog = np.array([obst_x, obst_y])
-#
-#             # Compute ellipse matrix
-#             obst_major *= casadi.sqrt(chi)
-#             obst_minor *= casadi.sqrt(chi)
-#             ab = np.array([[1. / ((obst_major + (r_disc + obst_r)) ** 2), 0],
-#                            [0, 1. / ((obst_minor + (r_disc + obst_r)) ** 2)]])
-#
-#             # In the original LMPCC paper the angle of the obstacles is defined clockwise
-#             # While it could also make sense to define this anti-clockwise, just like the orientation of the Roboat
-#             if self.rotation_clockwise:
-#                 obstacle_rotation = helpers.rotation_matrix(obst_psi)
-#             else:
-#                 obstacle_rotation = helpers.rotation_matrix(-obst_psi)
-#
-#             obstacle_ellipse_matrix = obstacle_rotation.transpose().dot(ab).dot(obstacle_rotation)
-#
-#             for disc_it in range(0, self.n_discs):
-#                 # Get and compute the disc position
-#                 disc_x = getattr(settings.params, 'disc_offset_' + str(disc_it))
-#                 disc_relative_pos = np.array([disc_x, 0])
-#                 disc_pos = pos + rotation_car.dot(disc_relative_pos)
-#
-#                 # construct the constraint and append it
-#                 disc_to_obstacle = disc_pos - obstacle_cog
-#                 c_disc_obstacle = disc_to_obstacle.transpose().dot(obstacle_ellipse_matrix).dot(disc_to_obstacle)
-#                 constraints.append(c_disc_obstacle + slack)
-
-
-class MultiEllipsoidConstraints:
-
-    def __init__(self, n_discs, max_obstacles, params, rotation_clockwise=True):
-        self.max_obstacles = max_obstacles
-        self.n_discs = n_discs
-
-        self.nh = max_obstacles * n_discs
-
-        # Add parameters
-        for obs_id in range(max_obstacles):
-            params.add_parameter("ellipsoid_obst_" + str(obs_id) + "_major")
-            params.add_parameter("ellipsoid_obst_" + str(obs_id) + "_minor")
-            params.add_parameter("ellipsoid_obst_" + str(obs_id) + "_chi")
-            params.add_parameter("ellipsoid_obst_" + str(obs_id) + "_r")
-
-
-
-        self.rotation_clockwise = rotation_clockwise
-
-    def append_lower_bound(self, lower_bound):
-        for obs in range(0, self.max_obstacles):
-            for disc in range(0, self.n_discs):
-                lower_bound.append(1.0)
-
-    def append_upper_bound(self, upper_bound):
-        for obs in range(0, self.max_obstacles):
-            for disc in range(0, self.n_discs):
-                upper_bound.append(np.Inf)
-
-    def append_constraints(self, constraints, z, param, settings, model):
-
-        settings.params.load_params(param)
-
-        # Retrieve variables
-        x = z[model.nu:model.nu + model.nx]
-        u = z[0:model.nu]
-
-        # States
-        pos = np.array([x[0], x[1]])
-        psi = x[2]
-        slack = u[-1]
-
-        rotation_car = helpers.rotation_matrix(psi)
-
-        r_disc = getattr(settings.params, 'disc_r') #param[self.start_param]
-
-        # Constraint for dynamic obstacles
-        for obstacle_id in range(self.max_obstacles): #todo needs to be adapted for vaiable number of agents
-            # Retrieve parameters
-            obst_x = x[(obstacle_id+1)*5]
-            obst_y = x[(obstacle_id+1)*5+1]
-            obst_psi = x[(obstacle_id+1)*5+2]
-            obst_major = getattr(settings.params, "ellipsoid_obst_" + str(obstacle_id) + "_major")
-            obst_minor = getattr(settings.params, "ellipsoid_obst_" + str(obstacle_id) + "_minor")
-            obst_r = getattr(settings.params, "ellipsoid_obst_" + str(obstacle_id) + "_r")
-
-            # multiplier for the risk when obst_major, obst_major only denote the covariance
-            # (i.e., the smaller the risk, the larger the ellipsoid).
-            # This value should already be a multiplier (using exponential cdf).
-            chi = getattr(settings.params, "ellipsoid_obst_" + str(obstacle_id) + "_chi")
-
-            # obstacle computations
-            obstacle_cog = np.array([obst_x, obst_y])
-
-            # Compute ellipse matrix
-            obst_major *= casadi.sqrt(chi)
-            obst_minor *= casadi.sqrt(chi)
-            ab = np.array([[1. / ((obst_major + (r_disc)) ** 2), 0],
-                           [0, 1. / ((obst_minor + (r_disc)) ** 2)]])
-
-            # In the original LMPCC paper the angle of the obstacles is defined clockwise
-            # While it could also make sense to define this anti-clockwise, just like the orientation of the Roboat
-            if self.rotation_clockwise:
-                obstacle_rotation = helpers.rotation_matrix(obst_psi)
-            else:
-                obstacle_rotation = helpers.rotation_matrix(-obst_psi)
-
-            obstacle_ellipse_matrix = obstacle_rotation.transpose().dot(ab).dot(obstacle_rotation)
-
-            for disc_it in range(0, self.n_discs):
-                # Get and compute the disc position
-                disc_x = getattr(settings.params, 'disc_offset_' + str(disc_it))
-                disc_relative_pos = np.array([disc_x, 0])
-                disc_pos = pos + rotation_car.dot(disc_relative_pos)
-
-                # construct the constraint and append it
-                disc_to_obstacle = disc_pos - obstacle_cog
-                c_disc_obstacle = disc_to_obstacle.transpose().dot(obstacle_ellipse_matrix).dot(disc_to_obstacle)
-                constraints.append(c_disc_obstacle + slack)
 

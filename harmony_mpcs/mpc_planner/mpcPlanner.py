@@ -42,11 +42,17 @@ class MPCPlanner(object):
             print("FAILED TO LOAD SOLVER")
             raise e
         
-        self._robot_radius = self._robot_config['radius']
+        
         self._nx = self._properties['nx']
         self._nu = self._properties['nu']
         self._npar = self._properties['npar']
         self._N = self._properties['N']
+
+        self._n_static_obst = self._config['n_static_obst']
+        self._n_dynamic_obst =  self._config['n_dynamic_obst']
+
+        self._robot_radius = self._robot_config['radius']
+
         self._output = np.zeros((self._N, self._nx + self._nu))
         print(self._map_runtime_par)
 
@@ -95,19 +101,8 @@ class MPCPlanner(object):
                 self._params[k+self._map_runtime_par['goal_position'][i]] = obs['goal']['position'][i]
                 self._params[k+self._map_runtime_par['initial_pose'][i]] = self._xinit[i]
             self._params[k+self._map_runtime_par['goal_orientation'][0]] = obs['goal']['orientation']
-            #self._params[k+self._map_runtime_par['disc_r'][0]] = 0.4
-            # others_state = np.array([-10, -10, 0, 0, 0, 0.25])
-            # for i in range(len(others_state)):
-            #     self._params[k+self._map_runtime_par['agents_pos_r_1'][i]] = others_state[i]
+      
             self._radius_others = 0.25
-            for obst_id in range(1):
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][0]]] = 2
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][1]]] = 2
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_r" ][0]]] = self._radius_others
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_psi" ][0]]] = 0
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_major" ][0]]] = 0
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_minor" ][0]]] = 0
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_chi" ][0]]] = 0
 
             self._params[k+ self._map_runtime_par['disc_0_r'][0]] = self._robot_radius
             self._params[k+ self._map_runtime_par['disc_0_offset'][0]] = 0
@@ -117,15 +112,26 @@ class MPCPlanner(object):
     def setLinearConstraints(self, lin_constr, r_body):
         for N_iter in range(self._N):
             k = N_iter * self._npar
-            for disc_idx in range(1): #todo
-                name = "disc_"+ str(disc_idx)+"_linear_constraint"
-                self._params[k+self._map_runtime_par[name + "disc_offset"][0]] = 0
-                self._params[k + self._map_runtime_par[name + "_a1"][0]] = lin_constr[N_iter][disc_idx][0]
-                self._params[k + self._map_runtime_par[name + "_a2"][0]] = lin_constr[N_iter][disc_idx][1]
-                self._params[k + self._map_runtime_par[name + "_b"][0]] = lin_constr[N_iter][disc_idx][-1]
+            for obst_id in range(self._n_static_obst): #todo
+                name = "linear_constraint_" + str(obst_id)
+                self._params[k + self._map_runtime_par[name + "_a1"][0]] = lin_constr[N_iter][obst_id][0]
+                self._params[k + self._map_runtime_par[name + "_a2"][0]] = lin_constr[N_iter][obst_id][1]
+                self._params[k + self._map_runtime_par[name + "_b"][0]] = lin_constr[N_iter][obst_id][-1]
            
-            
-                
+    def setEllipsoidConstraints(self):
+        for N_iter in range(self._N):
+            k = N_iter * self._npar
+            for obst_id in range(self._n_dynamic_obst):
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][0]]] = 2
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][1]]] = 2
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_r" ][0]]] = self._radius_others
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_psi" ][0]]] = 0
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_major" ][0]]] = 0
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_minor" ][0]]] = 0
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_chi" ][0]]] = 0
+
+
+                    
 
     def solve(self, obs):
 
@@ -137,7 +143,7 @@ class MPCPlanner(object):
         self._preprocessor.preprocess(obs['x'], obs['lidar_point_cloud'], obs['trans_lidar'])
         name = "disc_"+ str(0)+"_linear_constraint"
         self.setLinearConstraints(self._preprocessor._linear_constraints, r_body=self._robot_radius) #todo
-
+        self.setEllipsoidConstraints()
 
         problem = {}
         problem["xinit"] = self._xinit
