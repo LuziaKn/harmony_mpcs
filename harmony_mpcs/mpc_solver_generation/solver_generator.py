@@ -106,6 +106,7 @@ class SolverGenerator(object):
         print("--- Generating solver ---")
 
         self.define_problem()
+        print(self.solver_settings._params)
 
         # Remove the previous solver
         name = self.solver_settings._model_name + 'FORCESNLPsolver_fixed/'

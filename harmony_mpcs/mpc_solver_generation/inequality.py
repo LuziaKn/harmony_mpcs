@@ -222,8 +222,6 @@ class InteractiveEllipsoidConstraints:
             dist_approx = approx_norm(diff)
             dist_lowerbound = dist_approx-ca.sqrt(0.01)
 
-
-
             constraints.append(-(dist_approx-r_obst-r_robot))
             print('constraint added agent' + str(id))
 
@@ -314,16 +312,20 @@ class InteractiveGaussianEllipsoidConstraints:
 
 class FixedEllipsoidConstraints:
 
-    def __init__(self, params, n_discs, max_obstacles, num_constraints):
+    def __init__(self, params, n_discs, max_obstacles):
 
         self.max_obstacles = max_obstacles
         self.n_discs = n_discs
         self.name = "fixed_ellipsoid_obst"
 
+        print(self.name)
+
         self.nh = self.max_obstacles * n_discs
 
         params.add_parameter("disc_r")
-
+        for disc in range(n_discs):
+            for obst_id in range(max_obstacles):
+                params.add_parameter(self.constraint_name(disc, obst_id) + "_pos", 2)
 
 
     def constraint_name(self, disc_idx, obst_id):
@@ -352,15 +354,14 @@ class FixedEllipsoidConstraints:
         r_robot = getattr(settings._params, 'disc_r')
 
 
-        for i in range(0, self.max_obstacles):
-            id = i+1
-            r_obst = getattr(settings._params, "agents_pos_r_" + str(id))[-1]
-            pos_obst = getattr(settings._params, "agents_pos_r_" + str(id))[:2]
+        for i in range(self.max_obstacles):
+            r_obst = 0.5
+            pos_obst = getattr(settings._params, "disc_0_fixed_ellipsoid_constraint_agent_" + str(i) + "_pos")[:2]
             diff = pos - pos_obst
-            dist = casadi.sqrt(diff[0]**2 + diff[1]**2)
+            dist = ca.sqrt(diff[0]**2 + diff[1]**2)
 
             constraints.append(-(dist-r_obst-r_robot))
-            print('constraint added agent' + str(id))
+            print('constraint added agent' + str(i+1))
 
 
 class FixedLinearConstraints:

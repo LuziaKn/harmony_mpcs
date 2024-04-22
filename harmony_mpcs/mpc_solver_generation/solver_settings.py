@@ -26,8 +26,7 @@ class SolverSettings(object):
 
         # collision avoidance
         self._n_discs = 1
-        self._n_agents_mpc = config['mpc']['n_agents_mpc']
-        self._n_other_agents = self._n_agents_mpc-1
+        self._n_other_agents = config['mpc']['n_other_agents_mpc']
         self._n_static_obst = 1
 
         self._use_sqp_solver = False      # Note: SQP for scenario has max_it = 1
@@ -42,11 +41,15 @@ class SolverSettings(object):
         self._weights = helpers.WeightStructure(self._params, weight_list)
 
         self.set_ineq_constraints(self._n_discs, self._n_static_obst)
+        self.set_ineq_constr_dynamic(self._n_discs, self._n_other_agents)
         self.set_obj()
 
         print(self._params)
         self._npar = self._params.n_par()
         self._nh = self._modules.number_of_constraints()
+
+    def set_ineq_constr_dynamic(self, n_discs, n_obst):
+        self._modules.add_module(control_modules.EllipsoidalConstraintModule(self._params, n_discs=n_discs, max_obstacles=n_obst))
 
     def set_ineq_constraints(self, n_discs, n_obst):
         self._modules.add_module(control_modules.LinearConstraintModule(self._params, n_discs=n_discs, num_constraints=n_obst, horizon_length = self._N+2))

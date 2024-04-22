@@ -99,7 +99,13 @@ class MPCPlanner(object):
             # others_state = np.array([-10, -10, 0, 0, 0, 0.25])
             # for i in range(len(others_state)):
             #     self._params[k+self._map_runtime_par['agents_pos_r_1'][i]] = others_state[i]
+            self._params[[k+self._map_runtime_par['disc_0_fixed_ellipsoid_constraint_agent_0_pos'][0]]] = 2
+            print(self._params[[k+self._map_runtime_par['disc_0_fixed_ellipsoid_constraint_agent_0_pos'][0]]])
+            self._params[[k+self._map_runtime_par['disc_0_fixed_ellipsoid_constraint_agent_0_pos'][1]]] = 2
+            self._params[k+ self._map_runtime_par['disc_r'][0]] = self._robot_radius
+            #print(self._params)
             
+
     def setLinearConstraints(self, lin_constr, r_body):
         for N_iter in range(self._N):
             k = N_iter * self._npar
@@ -110,6 +116,8 @@ class MPCPlanner(object):
                 self._params[k + self._map_runtime_par[name + "_a1"][0]] = lin_constr[N_iter][disc_idx][0]
                 self._params[k + self._map_runtime_par[name + "_a2"][0]] = lin_constr[N_iter][disc_idx][1]
                 self._params[k + self._map_runtime_par[name + "_b"][0]] = lin_constr[N_iter][disc_idx][-1]
+           
+            
                 
 
     def solve(self, obs):
