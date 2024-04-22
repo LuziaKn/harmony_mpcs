@@ -97,217 +97,9 @@ class LinearConstraints:
                 a2 = a2_all[constraint_it]
                 b = b_all[constraint_it]
 
-                radius = getattr(settings._params, self.constraint_name(disc_idx) + "disc_r")
+                radius = r_robot = getattr(settings._params, "disc_" + str(disc_idx) + "_r")
                 constraints.append(a1 * pos[0] + a2 * pos[1] - b + radius)
 
-
-class InteractiveLinearConstraints:
-
-    def __init__(self, params, n_discs, max_obstacles, num_constraints):
-
-        self.max_obstacles = max_obstacles
-        self.n_discs = n_discs
-        self.name = "interactive_linear_obst"
-
-        self.nh = self.max_obstacles * n_discs
-
-
-
-        for disc in range(n_discs):
-            for obst_id in range(0, max_obstacles+1):
-                if num_constraints>0:
-                    params.add_parameter(self.constraint_name(disc, obst_id) + "_closest_points_x", num_constraints)
-                    params.add_parameter(self.constraint_name(disc, obst_id) + "_closest_points_y", num_constraints)
-
-
-    def constraint_name(self, disc_idx, obst_id):
-        return "disc_"+str(disc_idx)+"_interactive_linear_constraint_agent_" + str(obst_id)
-
-    def append_lower_bound(self, lower_bound):
-        for scenario in range(0, self.max_obstacles):
-            for disc in range(0, self.n_discs):
-                lower_bound.append(-np.inf)
-
-    def append_upper_bound(self, upper_bound):
-        for scenario in range(0, self.max_obstacles):
-            for disc in range(0, self.n_discs):
-                upper_bound.append(0.0)
-
-    def append_constraints(self,constraints, z, param, settings, model):
-        settings._params.load_params(param)
-
-        # Retrieve variables
-        x = z[model.nu:model.nu + model.nx]
-        u = z[0:model.nu]
-
-        # States
-        pos = x[:2]
-
-        r_robot = getattr(settings._params, 'disc_r')
-
-
-        for i in range(0, self.max_obstacles):
-            id = i+1
-            r_obst = getattr(settings._params, "other_agents_pos_r_" + str(i))[-1]
-            pos_obst = ca.vertcat(x[id*5], x[id*5+1])
-            diff = pos - pos_obst
-            dist = approx_norm(diff)
-            diff_normalized = diff/dist
-            point = pos_obst + (r_obst + r_robot) * diff_normalized
-
-            diff_point_pos = point - pos
-
-            a = diff_point_pos
-            a_norm = approx_norm(a)
-            a_normalized = a /a_norm
-
-            b = ca.mtimes(a_normalized.T,point)
-
-            # ax-b<=0
-            constraints.append(a_normalized[0] * pos[0] + a_normalized[1] * pos[1] - b)
-            print('constraint added agent' + str(id))
-
-
-class InteractiveEllipsoidConstraints:
-
-    def __init__(self, params, n_discs, max_obstacles, num_constraints, num_states_ego_agent, num_states_other_agent):
-
-        self.max_obstacles = max_obstacles
-        self.n_discs = n_discs
-        self.name = "interactive_ellipsoid_obst"
-
-        self.nh = self.max_obstacles * n_discs
-
-        self.num_states_ego_agent = num_states_ego_agent
-        self.num_states_other_agent = num_states_other_agent
-
-        for disc in range(n_discs):
-            for obst_id in range(0, max_obstacles+1):
-                if num_constraints>0:
-                    params.add_parameter(self.constraint_name(disc, obst_id) + "_closest_points_x", num_constraints)
-                    params.add_parameter(self.constraint_name(disc, obst_id) + "_closest_points_y", num_constraints)
-
-
-    def constraint_name(self, disc_idx, obst_id):
-        return "disc_"+str(disc_idx)+"_interactive_ellipsoid_constraint_agent_" + str(obst_id)
-
-    def append_lower_bound(self, lower_bound):
-        for scenario in range(0, self.max_obstacles):
-            for disc in range(0, self.n_discs):
-                lower_bound.append(-np.inf)
-
-    def append_upper_bound(self, upper_bound):
-        for scenario in range(0, self.max_obstacles):
-            for disc in range(0, self.n_discs):
-                upper_bound.append(0.0)
-
-    def append_constraints(self,constraints, z, param, settings, model):
-        settings._params.load_params(param)
-
-        # Retrieve variables
-        x = z[model.nu:model.nu + model.nx]
-        u = z[0:model.nu]
-
-        # States
-        pos = x[:2]
-
-        r_robot = getattr(settings._params, 'disc_r')
-
-
-        for i in range(0, self.max_obstacles):
-            id = i+1
-            r_obst = getattr(settings._params, "agents_pos_r_" + str(id))[-1]
-            pos_obst = ca.vertcat(x[self.num_states_ego_agent + self.num_states_other_agent*(id-1)], x[self.num_states_ego_agent + self.num_states_other_agent*(id-1)+1])
-            diff = pos - pos_obst
-            dist_approx = approx_norm(diff)
-            dist_lowerbound = dist_approx-ca.sqrt(0.01)
-
-            constraints.append(-(dist_approx-r_obst-r_robot))
-            print('constraint added agent' + str(id))
-
-class InteractiveGaussianEllipsoidConstraints:
-
-    def __init__(self, params, n_discs, max_obstacles, num_constraints, num_states_ego_agent, num_states_other_agent):
-
-        self.max_obstacles = max_obstacles
-        self.n_discs = n_discs
-        self.name = "interactive_ellipsoid_obst"
-
-        self.nh = self.max_obstacles * n_discs
-
-        self.num_states_ego_agent = num_states_ego_agent
-        self.num_states_other_agent = num_states_other_agent
-
-        params.add_parameter("sigma_x")
-        params.add_parameter("sigma_y")
-        params.add_parameter("epsilon")
-
-        for disc in range(n_discs):
-            for obst_id in range(0, max_obstacles+1):
-                if num_constraints>0:
-                    params.add_parameter(self.constraint_name(disc, obst_id) + "_closest_points_x", num_constraints)
-                    params.add_parameter(self.constraint_name(disc, obst_id) + "_closest_points_y", num_constraints)
-
-
-    def constraint_name(self, disc_idx, obst_id):
-        return "disc_"+str(disc_idx)+"_interactive_ellipsoid_constraint_agent_" + str(obst_id)
-
-    def append_lower_bound(self, lower_bound):
-        for scenario in range(0, self.max_obstacles):
-            for disc in range(0, self.n_discs):
-                lower_bound.append(0.)
-
-    def append_upper_bound(self, upper_bound):
-        for scenario in range(0, self.max_obstacles):
-            for disc in range(0, self.n_discs):
-                upper_bound.append(np.inf)
-
-    def append_constraints(self,constraints, z, param, settings, model):
-        settings._params.load_params(param)
-
-        # Retrieve variables
-        x = z[model.nu:model.nu + model.nx]
-        u = z[0:model.nu]
-
-        # States
-        pos = x[:2]
-
-        r_robot = getattr(settings._params, 'disc_r')
-
-        sigma_x = getattr(settings._params, "sigma_x")
-        sigma_y = getattr(settings._params, "sigma_y")
-        Sigma = casadi.diag(casadi.vertcat(sigma_x**2, sigma_y**2))
-
-        epsilon = getattr(settings._params, "epsilon")
-
-        approx_epsilon = 0.001
-
-
-        for i in range(0, self.max_obstacles):
-            id = i+1
-            r_obst = getattr(settings._params, "agents_pos_r_" + str(id))[-1]
-            pos_obst = casadi.vertcat(x[self.num_states_ego_agent + self.num_states_other_agent*(id-1)], x[self.num_states_ego_agent + self.num_states_other_agent*(id-1)+1])
-            diff = pos - pos_obst
-
-            combined_radius = r_obst + r_robot
-
-            a_ij = diff / approx_norm(diff, 0.001)
-
-            b_ij = combined_radius
-
-            x_erfinv = 1. - 2. * epsilon
-
-            z = casadi.sqrt(-casadi.log((1.0 - x_erfinv) / 2.0))
-            # Manual inverse erf, because somehow lacking from casadi...
-            # From here: http: // casadi.sourceforge.net / v1.9.0 / api / internal / d4 / d99 / casadi__calculus_8hpp_source.html  # l00307
-            y_erfinv = (((1.641345311 * z + 3.429567803) * z - 1.624906493) * z - 1.970840454) / \
-                       ((1.637067800 * z + 3.543889200) * z + 1.0)
-            y_erfinv = y_erfinv - (casadi.erf(y_erfinv) - x_erfinv) / (
-                    2.0 / casadi.sqrt(casadi.pi) * casadi.exp(-(y_erfinv * y_erfinv)))
-            y_erfinv = y_erfinv - (casadi.erf(y_erfinv) - x_erfinv) / (
-                    2.0 / casadi.sqrt(casadi.pi) * casadi.exp(-(y_erfinv * y_erfinv)))
-
-            constraints.append(a_ij.T @ casadi.SX(diff) - b_ij - y_erfinv * casadi.sqrt(2. * a_ij.T @ Sigma @ a_ij+approx_epsilon) )
 
 
 class FixedEllipsoidConstraints:
@@ -322,24 +114,28 @@ class FixedEllipsoidConstraints:
 
         self.nh = self.max_obstacles * n_discs
 
-        params.add_parameter("disc_r")
-        for disc in range(n_discs):
-            for obst_id in range(max_obstacles):
-                params.add_parameter(self.constraint_name(disc, obst_id) + "_pos", 2)
+        
+        for obst_id in range(max_obstacles):
+            params.add_parameter(self.constraint_name(obst_id) + "_pos", 2)
+            params.add_parameter(self.constraint_name(obst_id) + "_r", 1)
+            params.add_parameter(self.constraint_name(obst_id) + "_psi", 1)
+            params.add_parameter(self.constraint_name(obst_id) + "_major", 1)
+            params.add_parameter(self.constraint_name(obst_id) + "_minor", 1)
+            params.add_parameter(self.constraint_name(obst_id) + "_chi", 1)
 
 
-    def constraint_name(self, disc_idx, obst_id):
-        return "disc_"+str(disc_idx)+"_fixed_ellipsoid_constraint_agent_" + str(obst_id)
+    def constraint_name(self, obst_id):
+        return "ellipsoid_constraint_agent_" + str(obst_id)
 
     def append_lower_bound(self, lower_bound):
         for scenario in range(0, self.max_obstacles):
             for disc in range(0, self.n_discs):
-                lower_bound.append(-np.inf)
+                lower_bound.append(1.0)
 
     def append_upper_bound(self, upper_bound):
         for scenario in range(0, self.max_obstacles):
             for disc in range(0, self.n_discs):
-                upper_bound.append(0.0)
+                upper_bound.append(np.Inf)
 
     def append_constraints(self,constraints, z, param, settings, model):
         settings._params.load_params(param)
@@ -349,19 +145,42 @@ class FixedEllipsoidConstraints:
         u = z[0:model.nu]
 
         # States
-        pos = x[:2]
+        pos = x[0:2]
+        psi = x[2]
 
-        r_robot = getattr(settings._params, 'disc_r')
-
+        rotation_car = helpers.rotation_matrix(psi)
 
         for i in range(self.max_obstacles):
-            r_obst = 0.5
-            pos_obst = getattr(settings._params, "disc_0_fixed_ellipsoid_constraint_agent_" + str(i) + "_pos")[:2]
-            diff = pos - pos_obst
-            dist = ca.sqrt(diff[0]**2 + diff[1]**2)
+            obst_r = getattr(settings._params, self.constraint_name(i) + "_r")[0]
+            obst_pos = getattr(settings._params, self.constraint_name(i) + "_pos")[:2]
+            obst_psi = getattr(settings._params, self.constraint_name(i) + "_psi")[0]
+            obst_major = getattr(settings._params, self.constraint_name(i) + "_major")[0]
+            obst_minor = getattr(settings._params, self.constraint_name(i) + "_minor")[0]
+            chi = getattr(settings._params, self.constraint_name(i) + "_chi")[0]
 
-            constraints.append(-(dist-r_obst-r_robot))
-            print('constraint added agent' + str(i+1))
+            for disc in range(self.n_discs):              
+                disc_r = getattr(settings._params, "disc_" + str(disc) + "_r")
+                disc_offset = getattr(settings._params, "disc_" + str(disc) + "_offset")
+
+                # Compute ellipse matrix
+                obst_major *= ca.sqrt(chi)
+                obst_minor *= ca.sqrt(chi)
+                ab = ca.vertcat(ca.horzcat(1. / ((obst_major + (disc_r + obst_r)) ** 2), 0),
+                           ca.horzcat(0, 1. / ((obst_minor + (disc_r + obst_r)) ** 2)))
+
+                obstacle_rotation = helpers.rotation_matrix(obst_psi)
+                obstacle_ellipse_matrix = ca.mtimes(ca.mtimes(obstacle_rotation.T,ab),obstacle_rotation)
+
+                disc_relative_pos = ca.vertcat(disc_offset, 0)
+                disc_pos = pos + ca.mtimes(rotation_car,disc_relative_pos)
+
+                disc_to_obstacle = disc_pos - obst_pos
+                c_disc_obstacle = ca.mtimes(disc_to_obstacle.T,ca.mtimes(obstacle_ellipse_matrix,disc_to_obstacle))
+
+                A = (obst_pos - disc_pos) / ca.norm_2(disc_pos - obst_pos)
+                b = A.T @ (obst_pos - A*(obst_r + disc_r))
+                constraints.append(c_disc_obstacle)
+                print('constraint added agent' + str(i+1))
 
 
 class FixedLinearConstraints:

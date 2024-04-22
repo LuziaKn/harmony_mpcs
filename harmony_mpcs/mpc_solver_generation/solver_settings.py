@@ -32,9 +32,12 @@ class SolverSettings(object):
         self._use_sqp_solver = False      # Note: SQP for scenario has max_it = 1
         
         # robot
-
         self._params = helpers.ParameterStructure()
         self._modules = control_modules.ModuleManager(self._params)
+
+        for disc in range(self._n_discs):
+            self._params.add_parameter("disc_" + str(disc) + "_r")
+            self._params.add_parameter("disc_" + str(disc) + "_offset")
 
         weight_list = list()
 

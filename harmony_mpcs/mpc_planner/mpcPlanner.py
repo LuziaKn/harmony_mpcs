@@ -99,10 +99,18 @@ class MPCPlanner(object):
             # others_state = np.array([-10, -10, 0, 0, 0, 0.25])
             # for i in range(len(others_state)):
             #     self._params[k+self._map_runtime_par['agents_pos_r_1'][i]] = others_state[i]
-            self._params[[k+self._map_runtime_par['disc_0_fixed_ellipsoid_constraint_agent_0_pos'][0]]] = 2
-            print(self._params[[k+self._map_runtime_par['disc_0_fixed_ellipsoid_constraint_agent_0_pos'][0]]])
-            self._params[[k+self._map_runtime_par['disc_0_fixed_ellipsoid_constraint_agent_0_pos'][1]]] = 2
-            self._params[k+ self._map_runtime_par['disc_r'][0]] = self._robot_radius
+            self._radius_others = 0.25
+            for obst_id in range(1):
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][0]]] = 2
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][1]]] = 2
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_r" ][0]]] = self._radius_others
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_psi" ][0]]] = 0
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_major" ][0]]] = 0
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_minor" ][0]]] = 0
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_chi" ][0]]] = 0
+
+            self._params[k+ self._map_runtime_par['disc_0_r'][0]] = self._robot_radius
+            self._params[k+ self._map_runtime_par['disc_0_offset'][0]] = 0
             #print(self._params)
             
 
@@ -111,7 +119,6 @@ class MPCPlanner(object):
             k = N_iter * self._npar
             for disc_idx in range(1): #todo
                 name = "disc_"+ str(disc_idx)+"_linear_constraint"
-                self._params[k+self._map_runtime_par[name + "disc_r"][0]] = r_body
                 self._params[k+self._map_runtime_par[name + "disc_offset"][0]] = 0
                 self._params[k + self._map_runtime_par[name + "_a1"][0]] = lin_constr[N_iter][disc_idx][0]
                 self._params[k + self._map_runtime_par[name + "_a2"][0]] = lin_constr[N_iter][disc_idx][1]
