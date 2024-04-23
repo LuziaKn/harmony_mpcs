@@ -9,10 +9,13 @@ from harmony_mpcs.mpc_planner.mpcPreprocessor import MPCPreprocessor
 
 class MPCPlanner(object):
 
-    def __init__(self, solverDir, solverName, config, robot_config):
+    def __init__(self, solverDir, solverName, config, robot_config, ped_config):
 
         self._config = config
         self._robot_config = robot_config
+        self._ped_config = ped_config
+
+        self._dt = self._config['time_step']
         
 
         self._solverFile = (
@@ -101,8 +104,6 @@ class MPCPlanner(object):
                 self._params[k+self._map_runtime_par['goal_position'][i]] = obs['goal']['position'][i]
                 self._params[k+self._map_runtime_par['initial_pose'][i]] = self._xinit[i]
             self._params[k+self._map_runtime_par['goal_orientation'][0]] = obs['goal']['orientation']
-      
-            self._radius_others = 0.25
 
             self._params[k+ self._map_runtime_par['disc_0_r'][0]] = self._robot_radius
             self._params[k+ self._map_runtime_par['disc_0_offset'][0]] = 0
@@ -118,24 +119,25 @@ class MPCPlanner(object):
                 self._params[k + self._map_runtime_par[name + "_a2"][0]] = lin_constr[N_iter][obst_id][1]
                 self._params[k + self._map_runtime_par[name + "_b"][0]] = lin_constr[N_iter][obst_id][-1]
            
-    def setEllipsoidConstraints(self):
+    def setEllipsoidConstraints(self, pos_dynamic_obst, vel_dynamic_obst):
         for N_iter in range(self._N):
+            print(pos_dynamic_obst)
+           
             k = N_iter * self._npar
             for obst_id in range(self._n_dynamic_obst):
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][0]]] = 2
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][1]]] = 2
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_r" ][0]]] = self._radius_others
+                pos =  pos_dynamic_obst[obst_id,:] + N_iter * self._dt * vel_dynamic_obst[obst_id,:]
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][0]]] = pos[0]
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][1]]] = pos[1]
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_r" ][0]]] = self._ped_config['radius']
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_psi" ][0]]] = 0
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_major" ][0]]] = 0
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_minor" ][0]]] = 0
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_chi" ][0]]] = 0
 
-
-                    
-
     def solve(self, obs):
 
         self._xinit = np.concatenate([obs['x'], obs['xdot']])
+        self._dyn_obst = obs['dyn_obst']
         
 
         self.setX0(initialize_type="current_state", initial_step=self._initial_step)
@@ -143,7 +145,9 @@ class MPCPlanner(object):
         self._preprocessor.preprocess(obs['x'], obs['lidar_point_cloud'], obs['trans_lidar'])
         name = "disc_"+ str(0)+"_linear_constraint"
         self.setLinearConstraints(self._preprocessor._linear_constraints, r_body=self._robot_radius) #todo
-        self.setEllipsoidConstraints()
+        pos_dynamic_obst = self._dyn_obst[:,:3]
+        vel_dynamic_obst = self._dyn_obst[:,3:]
+        self.setEllipsoidConstraints(pos_dynamic_obst=pos_dynamic_obst, vel_dynamic_obst=vel_dynamic_obst) 
 
         problem = {}
         problem["xinit"] = self._xinit
