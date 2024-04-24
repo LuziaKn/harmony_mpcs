@@ -121,7 +121,6 @@ class MPCPlanner(object):
            
     def setEllipsoidConstraints(self, pos_dynamic_obst, vel_dynamic_obst):
         for N_iter in range(self._N):
-            print(pos_dynamic_obst)
            
             k = N_iter * self._npar
             for obst_id in range(self._n_dynamic_obst):
@@ -163,13 +162,19 @@ class MPCPlanner(object):
 
         if self._exitflag == 1 or self._exitflag == 0:
             action = self._output[1,self._nu + self._nx-3:]
-        else: action = np.array([0,0,0])
+        else: 
+            action = np.array([0,0,0])
+            self._output = np.zeros((self._N, self._nx + self._nu))
+            self._output[self._nu,self._nu:self._nx] = self._xinit
+
 
         return action, self._output
 
     
     def computeAction(self, obs):
         self._action, output = self.solve(obs)
+
+        print(output[0,:2])
 
         # print('action: ', self._action)
         return self._action, output, self._preprocessor._linear_constraints , self._preprocessor._closest_points#, exitflag, self.vel_limit
