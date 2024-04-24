@@ -5,6 +5,7 @@ import forcespro
 
 from harmony_mpcs.utils.utils import output2array
 from harmony_mpcs.mpc_planner.mpcPreprocessor import MPCPreprocessor
+from harmony_mpcs.mpc_planner.mpcDynObstPredictor import MPCDynObstPredictor
 
 
 class MPCPlanner(object):
@@ -60,6 +61,7 @@ class MPCPlanner(object):
         print(self._map_runtime_par)
 
         self._preprocessor = MPCPreprocessor(config, self._N)
+        self._predictor = MPCDynObstPredictor(config)
 
 
     def reset(self):
@@ -126,8 +128,10 @@ class MPCPlanner(object):
         for N_iter in range(self._N):
            
             k = N_iter * self._npar
+            self._predictor.predict(self._dyn_obst[:,:3], self._dyn_obst[:,3:], self._N)
             for obst_id in range(self._n_dynamic_obst):
-                pos =  pos_dynamic_obst[obst_id,:] + N_iter * self._dt * vel_dynamic_obst[obst_id,:]
+                pos =  self._predictor.predictions[obst_id][N_iter]
+                print(self._n_dynamic_obst)
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][0]]] = pos[0]
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][1]]] = pos[1]
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_r" ][0]]] = self._ped_config['radius']
@@ -160,7 +164,7 @@ class MPCPlanner(object):
         else: 
             action = np.array([0,0,0])
             self._output = np.zeros((self._N, self._nx + self._nu))
-            self._output[self._nu,self._nu:self._nx] = self._xinit
+            self._output[:,self._nu:self._nu+self._nx] = self._xinit
 
 
         return action, self._output
