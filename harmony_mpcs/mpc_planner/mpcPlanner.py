@@ -68,7 +68,6 @@ class MPCPlanner(object):
 
         self._x0 = np.zeros(shape=(self._N, self._nx + self._nu))
         self._xinit = np.zeros(self._nx)
-        print(self._nx)
         self._params = np.zeros(shape=(self._npar * self._N), dtype=float)
 
         self.setWeights()
@@ -158,7 +157,7 @@ class MPCPlanner(object):
         self._output = output2array(self._output)
 
         if self._exitflag < 0:
-            print(self._exitflag)
+            print('exit flag:', self._exitflag)
 
         if self._exitflag == 1 or self._exitflag == 0:
             action = self._output[1,self._nu + self._nx-3:]
@@ -173,8 +172,5 @@ class MPCPlanner(object):
     
     def computeAction(self, obs):
         self._action, output = self.solve(obs)
-
-        print(output[0,:2])
-
-        # print('action: ', self._action)
+        
         return self._action, output, self._preprocessor._linear_constraints , self._preprocessor._closest_points#, exitflag, self.vel_limit
