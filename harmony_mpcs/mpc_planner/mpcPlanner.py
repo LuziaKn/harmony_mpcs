@@ -25,7 +25,7 @@ class MPCPlanner(object):
         print(self._solverFile)
                 
         if not os.path.isdir(self._solverFile):
-            raise(SolverDoesNotExistError(self._solverFile))
+            raise Exception("Solver file  does not exist", self._solverFile)
         
         with open(self._solverFile + "/params.pkl", 'rb') as file:
             try:
@@ -61,7 +61,6 @@ class MPCPlanner(object):
 
         self._preprocessor = MPCPreprocessor(config, self._N)
 
-        
 
     def reset(self):
         self._initial_step = True
@@ -106,8 +105,13 @@ class MPCPlanner(object):
 
             self._params[k+ self._map_runtime_par['disc_0_r'][0]] = self._robot_radius
             self._params[k+ self._map_runtime_par['disc_0_offset'][0]] = 0
-            #print(self._params)
-            
+
+        self._preprocessor.preprocess(obs['x'], obs['lidar_point_cloud'], obs['trans_lidar'])
+        name = "disc_"+ str(0)+"_linear_constraint"
+        self.setLinearConstraints(self._preprocessor._linear_constraints, r_body=self._robot_radius) #todo
+        pos_dynamic_obst = self._dyn_obst[:,:3]
+        vel_dynamic_obst = self._dyn_obst[:,3:]
+        self.setEllipsoidConstraints(pos_dynamic_obst=pos_dynamic_obst, vel_dynamic_obst=vel_dynamic_obst) 
 
     def setLinearConstraints(self, lin_constr, r_body):
         for N_iter in range(self._N):
@@ -137,21 +141,13 @@ class MPCPlanner(object):
         self._xinit = np.concatenate([obs['x'], obs['xdot']])
         self._dyn_obst = obs['dyn_obst']
         
-
-        self.setX0(initialize_type="current_state", initial_step=self._initial_step)
+        self.setX0(initialize_type=self._config['initialization'], initial_step=self._initial_step)
         self.setParams(obs)
-        self._preprocessor.preprocess(obs['x'], obs['lidar_point_cloud'], obs['trans_lidar'])
-        name = "disc_"+ str(0)+"_linear_constraint"
-        self.setLinearConstraints(self._preprocessor._linear_constraints, r_body=self._robot_radius) #todo
-        pos_dynamic_obst = self._dyn_obst[:,:3]
-        vel_dynamic_obst = self._dyn_obst[:,3:]
-        self.setEllipsoidConstraints(pos_dynamic_obst=pos_dynamic_obst, vel_dynamic_obst=vel_dynamic_obst) 
 
         problem = {}
         problem["xinit"] = self._xinit
         problem["x0"] = self._x0.flatten()[:]
         problem["all_parameters"] = self._params
-
 
         self._output, self._exitflag, info = self._solver.solve(problem)
         self._output = output2array(self._output)
@@ -172,5 +168,5 @@ class MPCPlanner(object):
     
     def computeAction(self, obs):
         self._action, output = self.solve(obs)
-        
+
         return self._action, output, self._preprocessor._linear_constraints , self._preprocessor._closest_points#, exitflag, self.vel_limit
