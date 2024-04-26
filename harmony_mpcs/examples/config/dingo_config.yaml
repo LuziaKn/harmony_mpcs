@@ -66,11 +66,4 @@ robot:
   base_type: holonomic
 example:
   debug: False
-ros:
-  mode: 'vicon' # 'vicon' or 'gazebo' 
-  visualize: True
-  vel_topic: "/cmd_vel" #"/omnidrive_velocity_controller/command"
-  pose_topic: "/robot_ekf/odometry" # "/joint_states"
-  goal_topic: "/move_base_simple/goal"
-  dyn_obst_topic: "/vicon_util/dynamic_objects"
-  frame_id: "map" #"world"
+

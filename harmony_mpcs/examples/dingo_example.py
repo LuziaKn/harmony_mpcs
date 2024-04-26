@@ -92,19 +92,20 @@ class DingoExample(MPCExample):
             self._xdot = ob["robot_0"]['joint_state']['velocity']
             self._dyn_obst = np.zeros((1,6))
             self._dyn_obst[0, :3] = [4.0, -0.5, 0.0]
+
             obs = {"x": self._x,
                     "xdot": self.output[1,self._planner._nu+ 3 : self._planner._nu + self._planner._nx],
                     "goal": self._goal,
                     "lidar_point_cloud": self._lidar_pc,
                     "trans_lidar": self._trans,
                     "dyn_obst": self._dyn_obst,}
+            
             action, self.output, _, _ = self._planner.computeAction(obs)
       
-
             ob, *_ = self._env.step(np.concatenate([action[:2],np.zeros(1)]))
-            print(action)
-            self._env.update_visualizations(self.output[:,:3])
-            print('no error')
+    
+            self._env.update_visualizations(self.output[:,self._planner._nu:self._planner._nu+3])
+        
 
 def main():
     dingo_example = DingoExample("dingo_config.yaml")
