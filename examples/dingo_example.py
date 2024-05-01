@@ -1,7 +1,7 @@
 import numpy as np
 import gymnasium as gym
 
-from harmony_mpcs.examples.mpc_example import MPCExample
+from mpc_example import MPCExample
 from urdfenvs.sensors.full_sensor import FullSensor
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from mpscenes.obstacles.sphere_obstacle import SphereObstacle
