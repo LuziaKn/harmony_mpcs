@@ -88,7 +88,6 @@ class MPCPlanner(object):
             k = N_iter * self._npar
             selected_weights = {key: value for key, value in self._map_runtime_par.items() if key.startswith('W')}
             
-
             for key, _ in selected_weights.items():
                 try:
                     self._params[k+self._map_runtime_par[key][0]] = self._config['weights'][key]
@@ -126,20 +125,27 @@ class MPCPlanner(object):
                 self._params[k + self._map_runtime_par[name + "_b"][0]] = lin_constr[N_iter][obst_id][-1]
            
     def setEllipsoidConstraints(self, pos_dynamic_obst, vel_dynamic_obst):
+        major = 0
+        minor = 0
         for N_iter in range(self._N):
            
             k = N_iter * self._npar
             self._predictor.predict(self._dyn_obst[:,:3], self._dyn_obst[:,3:], self._N)
+
+            manual_noise = 0.3
+            major = np.sqrt(major**2 + (manual_noise * self._dt)**2)
+            minor = np.sqrt(minor**2 + (manual_noise * self._dt)**2)
+            
             for obst_id in range(self._n_dynamic_obst):
                 pos =  self._predictor.predictions[obst_id][N_iter]
-             
+
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][0]]] = pos[0]
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][1]]] = pos[1]
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_r" ][0]]] = self._ped_config['radius']
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_psi" ][0]]] = 0
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_major" ][0]]] = 0
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_minor" ][0]]] = 0
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_chi" ][0]]] = 0
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_major" ][0]]] = major
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_minor" ][0]]] = major
+                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_chi" ][0]]] = 1
 
     def solve(self, obs):
 

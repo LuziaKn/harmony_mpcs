@@ -92,7 +92,7 @@ class FixedMPCObjective:
            
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self._N + 1:
-                cost = Wgoal_position * goal_dist_error_normalized  + Wgoal_orientation * goal_orientation_error
+                cost = Wgoal_position * goal_dist_error  + Wgoal_orientation * goal_orientation_error
             else:
                 cost =  +  Wvel_orientation * vel_orientation_error+  Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y
         else:
