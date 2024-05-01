@@ -34,7 +34,19 @@ class MPCPreprocessor(object):
         self._fsd.compute_constraints(point_cloud)
         return list(self._fsd.asdict().values()), self._fsd.constraints(), self._fsd.points()    
     
-    def preprocess(self, x_ref, point_cloud, trans_lidar):
+    def preprocess(self, obs, info):
+        self._robot_radius = info['robot_radius']
+
+        self._goal_position = obs['goal']['position']
+        self._goal_orientation = obs['goal']['orientation']
+        self._initial_pose = obs['x']
+
+
+        x_ref = obs['x']
+        point_cloud = obs['lidar_point_cloud']
+        trans_lidar = obs['trans_lidar']
+      
+
         self._linear_constraints = []
         halfplanes = []
         for j in range(self._N):
@@ -42,7 +54,17 @@ class MPCPreprocessor(object):
             self._linear_constraints.append(self._linear_constraints_j)
             halfplanes.append(halfplanes_j)
             self._closest_points = points_j
- 
+
+    def get_params_dict(self):
+        params_dict = {
+            "robot_radius": self._robot_radius,
+            "goal_position": self._goal_position,
+            "goal_orientation": self._goal_orientation,
+            "initial_pose": self._initial_pose,
+            "linear_constraints": self._linear_constraints,
+    
+        }
+        return params_dict
            
 
 

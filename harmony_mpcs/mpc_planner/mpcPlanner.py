@@ -94,21 +94,19 @@ class MPCPlanner(object):
                 except Exception as e:
                     print(f"An error occurred: {e}")
 
-    def setParams(self, obs):
+    def setParams(self, params_dict):
         for N_iter in range(self._N):
             k = N_iter * self._npar
         
             self.dim = 3
             for i in range(self.dim):
-                self._params[k+self._map_runtime_par['goal_position'][i]] = obs['goal']['position'][i]
-                self._params[k+self._map_runtime_par['initial_pose'][i]] = self._xinit[i]
-            self._params[k+self._map_runtime_par['goal_orientation'][0]] = obs['goal']['orientation']
-
-            self._params[k+ self._map_runtime_par['disc_0_r'][0]] = self._robot_radius
+                self._params[k+self._map_runtime_par['goal_position'][i]] = params_dict['goal_position'][i]
+                self._params[k+self._map_runtime_par['initial_pose'][i]] = params_dict['initial_pose'][i]
+            
+            self._params[k+self._map_runtime_par['goal_orientation'][0]] =  params_dict['goal_orientation']
+            self._params[k+ self._map_runtime_par['disc_0_r'][0]] = params_dict['robot_radius']
             self._params[k+ self._map_runtime_par['disc_0_offset'][0]] = 0
 
-        self._preprocessor.preprocess(obs['x'], obs['lidar_point_cloud'], obs['trans_lidar'])
-        
         self.setLinearConstraints(self._preprocessor._linear_constraints, r_body=self._robot_radius) 
 
         pos_dynamic_obst = self._dyn_obst[:,:3]
@@ -147,13 +145,16 @@ class MPCPlanner(object):
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_minor" ][0]]] = major
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_chi" ][0]]] = 1
 
-    def solve(self, obs):
+    def solve(self, obs, info):
 
         self._xinit = np.concatenate([obs['x'], obs['xdot']])
         self._dyn_obst = obs['dyn_obst']
         
         self.setX0(initialize_type=self._config['initialization'], initial_step=self._initial_step)
-        self.setParams(obs)
+        
+        self._preprocessor.preprocess(obs, info)
+        params_dict = self._preprocessor.get_params_dict()
+        self.setParams(params_dict)
 
         problem = {}
         problem["xinit"] = self._xinit
@@ -178,6 +179,7 @@ class MPCPlanner(object):
 
     
     def computeAction(self, obs):
-        self._action, output = self.solve(obs)
+        info = {'robot_radius': self._robot_radius}
+        self._action, output = self.solve(obs, info)
 
         return self._action, output, self._preprocessor._linear_constraints , self._preprocessor._closest_points#, exitflag, self.vel_limit
