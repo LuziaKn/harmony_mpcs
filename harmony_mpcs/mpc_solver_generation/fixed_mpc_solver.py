@@ -8,11 +8,6 @@ Main system specific file to create an MPC optimization solver using Forces Pro
 # Or needs to be in the path already
 import sys, os, shutil
 
-import harmony_mpcs.mpc_solver_generation.helpers as helpers
-
-# If your forces is in this directory add it
-helpers.load_forces_path()
-
 import numpy as np
 import pickle
 import forcespro.nlp
