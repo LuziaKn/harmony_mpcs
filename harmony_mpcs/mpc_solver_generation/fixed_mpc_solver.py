@@ -8,10 +8,6 @@ Main system specific file to create an MPC optimization solver using Forces Pro
 # Or needs to be in the path already
 import sys, os, shutil
 
-sys.path.append("../")
-sys.path.append("")
-
-sys.path.append('/home/luzia/code/forces_pro_client/') #add path to forces_pro files here ToDo make generic
 import harmony_mpcs.mpc_solver_generation.helpers as helpers
 
 # If your forces is in this directory add it
