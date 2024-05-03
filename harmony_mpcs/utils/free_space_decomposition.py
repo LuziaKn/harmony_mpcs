@@ -72,6 +72,8 @@ class FreeSpaceDecomposition(object):
     ):
         self._number_constraints = number_constraints
         self._max_radius = max_radius
+        self._max_height = 0.5
+        self._min_height = 0.1
         self._constraints = []
 
     def set_position(self, position: np.ndarray):
@@ -87,6 +89,9 @@ class FreeSpaceDecomposition(object):
         idx = np.argsort(dists)
         points = points[idx]
         points = points[dists[idx] < self._max_radius]
+        points = points[points[:,2] < self._max_height]
+        points = points[points[:,2] > self._min_height]
+    
         while (
             points.size > 0
             and len(self._constraints) < self._number_constraints

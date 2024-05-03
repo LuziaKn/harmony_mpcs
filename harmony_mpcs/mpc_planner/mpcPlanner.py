@@ -60,7 +60,7 @@ class MPCPlanner(object):
         self._output = np.zeros((self._N, self._nx + self._nu))
         print(self._map_runtime_par)
 
-        self._preprocessor = MPCPreprocessor(config, self._N)
+        self._preprocessor = MPCPreprocessor(config, self._N, self._nu, self._nx)
         self._predictor = MPCDynObstPredictor(config)
 
 
@@ -152,8 +152,9 @@ class MPCPlanner(object):
         
         self.setX0(initialize_type=self._config['initialization'], initial_step=self._initial_step)
         
-        self._preprocessor.preprocess(obs, info)
+        self._preprocessor.preprocess(obs, info, self._output)
         params_dict = self._preprocessor.get_params_dict()
+       
         self.setParams(params_dict)
 
         problem = {}

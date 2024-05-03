@@ -5,12 +5,15 @@ from harmony_mpcs.utils.free_space_decomposition import FreeSpaceDecomposition
 
 class MPCPreprocessor(object):
 
-    def __init__(self, config, N):
+    def __init__(self, config, N, nu, nx):
         # collision avoidance
         self._n_obstacles = 1
-        self._max_radius = 5
+        self._max_radius = 2
         self._N = N
+        self._nu = nu
+        self._nx = nx
         self._fsd = FreeSpaceDecomposition(number_constraints=self._n_obstacles, max_radius=self._max_radius)
+        self
 
     def compute_constraints(self, robot_state: np.ndarray, point_cloud: np.ndarray, trans_lidar) -> Tuple[List, List]:
         """
@@ -34,7 +37,7 @@ class MPCPreprocessor(object):
         self._fsd.compute_constraints(point_cloud)
         return list(self._fsd.asdict().values()), self._fsd.constraints(), self._fsd.points()    
     
-    def preprocess(self, obs, info):
+    def preprocess(self, obs, info, previous_plan=None):
         self._robot_radius = info['robot_radius']
 
         self._goal_position = obs['goal']['position']
@@ -49,7 +52,11 @@ class MPCPreprocessor(object):
 
         self._linear_constraints = []
         halfplanes = []
+
+        self._linear_constr_fixed_over_horizon = False
         for j in range(self._N):
+            if not self._linear_constr_fixed_over_horizon:
+                 x_ref = previous_plan[j,self._nu:self._nu+3]
             self._linear_constraints_j, halfplanes_j, points_j = self.compute_constraints(x_ref, point_cloud, trans_lidar)
             self._linear_constraints.append(self._linear_constraints_j)
             halfplanes.append(halfplanes_j)
