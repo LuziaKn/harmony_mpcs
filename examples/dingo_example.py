@@ -76,7 +76,7 @@ class DingoExample(MPCExample):
         for i in range(self._config['time_horizon']):
             self._env.add_visualization(size=[self._r_body, 0.1])
 
-        self._lidar_pc = 1000* np.ones((3,1))
+        self._lidar_pc = 1000* np.ones((1,3))
         self._trans = np.zeros((3,))
 
         return {}
