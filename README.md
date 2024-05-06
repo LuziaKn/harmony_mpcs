@@ -32,9 +32,17 @@ python install
 ```
 and
 
+Source the generated environment using 
+
+```bash
+python shell
+```
+ and install the harmony_mpcs package via 
+ 
 ```bash
 pip install -e .
 ```
+
 
 ## Examples
  Genterate the solver:
