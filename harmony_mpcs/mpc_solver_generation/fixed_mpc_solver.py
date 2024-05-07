@@ -112,6 +112,8 @@ def generate_solver(current_dir, save_dir):
     options.solver_timeout = 1
     options.noVariableElimination = 1
     #options.init = 1 # Warm start?
+    # for use with docker
+    options.license.use_floating_license = 1
 
     # Todo: Make solver options a lambda defined in the settings
     if not settings.use_sqp_solver:

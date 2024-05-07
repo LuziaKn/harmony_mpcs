@@ -174,7 +174,9 @@ class MPCPlanner(object):
             self._output, self._exitflag, info = self._solver.solve(problem)
         elif 'ros2' in self._mode:
             self.output, self._exitflag = self._solver_function(problem)
-        self._output = output2array(self._output)
+            print('ros2 reached', flush=True)
+        if isinstance(self._output, dict):
+            self._output = output2array(self._output)
 
         if self._exitflag < 0:
             print('exit flag:', self._exitflag)
@@ -193,5 +195,6 @@ class MPCPlanner(object):
     def computeAction(self, obs):
         info = {'robot_radius': self._robot_radius}
         self._action, output = self.solve(obs, info)
+        print('output:', output, flush=True)
 
         return self._action, output, self._preprocessor._linear_constraints , self._preprocessor._closest_points#, exitflag, self.vel_limit

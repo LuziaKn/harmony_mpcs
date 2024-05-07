@@ -37,5 +37,20 @@ def compute_point_cloud(robot_state: np.ndarray, lidar_obs: np.ndarray, relative
             axis=1) + lidar_position
 
     z_threshold = 0.0
-    absolute_positions_filtered = absolute_positions[absolute_positions[:,2]>=z_threshold]
+    absolute_positions_filtered = absolute_positions#[absolute_positions[:,2]>=z_threshold]
     return absolute_positions_filtered
+
+def convert_laserscan_to_pointcloud(laserscan_msg):
+    # Extract necessary data from LaserScan message
+    ranges = laserscan_msg.ranges
+    angle_min = laserscan_msg.angle_min
+    angle_increment = laserscan_msg.angle_increment
+    # Calculate angles
+    angles = np.arange(angle_min, angle_min + len(ranges) * angle_increment, angle_increment)
+    # Convert polar coordinates to Cartesian coordinates
+    points = np.zeros((len(ranges), 3))
+    points[:, 0] = ranges * np.cos(angles)  # x = r * cos(theta)
+    points[:, 1] = ranges * np.sin(angles)  # y = r * sin(theta)
+    # Create PointCloud2 message
+
+    return points
