@@ -1,7 +1,6 @@
 import numpy as np
 import os
 import pickle
-import forcespro
 
 from harmony_mpcs.utils.utils import output2array
 from harmony_mpcs.mpc_planner.mpcPreprocessor import MPCPreprocessor
