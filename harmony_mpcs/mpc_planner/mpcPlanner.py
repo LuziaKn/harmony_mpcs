@@ -9,13 +9,18 @@ from harmony_mpcs.mpc_planner.mpcDynObstPredictor import MPCDynObstPredictor
 
 class MPCPlanner(object):
 
-    def __init__(self, solverDir, solverName, config, robot_config, ped_config, mode):
+    def __init__(self, solverDir=None, solverName=None, solver_function=None, config=None, robot_config=None, ped_config=None, mode='gazebo_ros1'):
 
-        self._config = config
-        self._robot_config = robot_config
-        self._ped_config = ped_config
+        if config is not None and robot_config is not None and ped_config is not None:
+            self._config = config
+            self._robot_config = robot_config
+            self._ped_config = ped_config
+        else:
+            raise Exception("Configurations not provided")
 
+        
         self._mode = mode
+        self._solver_function = solver_function
 
         self._dt = self._config['time_step']
         
@@ -165,7 +170,10 @@ class MPCPlanner(object):
         problem["x0"] = self._x0.flatten()[:]
         problem["all_parameters"] = self._params
 
-        self._output, self._exitflag, info = self._solver.solve(problem)
+        if 'ros1' in self._mode:
+            self._output, self._exitflag, info = self._solver.solve(problem)
+        elif 'ros2' in self._mode:
+            self.output, self._exitflag = self._solver_function(problem)
         self._output = output2array(self._output)
 
         if self._exitflag < 0:
