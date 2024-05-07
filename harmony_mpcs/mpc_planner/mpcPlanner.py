@@ -10,11 +10,13 @@ from harmony_mpcs.mpc_planner.mpcDynObstPredictor import MPCDynObstPredictor
 
 class MPCPlanner(object):
 
-    def __init__(self, solverDir, solverName, config, robot_config, ped_config):
+    def __init__(self, solverDir, solverName, config, robot_config, ped_config, mode):
 
         self._config = config
         self._robot_config = robot_config
         self._ped_config = ped_config
+
+        self._mode = mode
 
         self._dt = self._config['time_step']
         
@@ -38,13 +40,15 @@ class MPCPlanner(object):
                 print(f"File {params_file_path} not found.")
             except Exception as e:
                 print(f"An error occurred: {e}")
-        
-        try:
-            print("Loading solver %s" % self._solverFile)
-            self._solver = forcespro.nlp.Solver.from_directory(self._solverFile)
-        except Exception as e:
-            print("FAILED TO LOAD SOLVER")
-            raise e
+
+        if not 'ros2' in self._mode:
+            import forcespro
+            try:
+                print("Loading solver %s" % self._solverFile)
+                self._solver = forcespro.nlp.Solver.from_directory(self._solverFile)
+            except Exception as e:
+                print("FAILED TO LOAD SOLVER")
+                raise e
         
         
         self._nx = self._properties['nx']
