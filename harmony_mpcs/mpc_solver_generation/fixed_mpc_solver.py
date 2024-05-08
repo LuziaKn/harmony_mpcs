@@ -114,6 +114,9 @@ def generate_solver(current_dir, save_dir):
     #options.init = 1 # Warm start?
     # for use with docker
     options.license.use_floating_license = 1
+    options.license.floating_license_server = 'host.docker.internal'
+    options.embedded_timing = 1
+    #options.platform = "platform_name"
 
     # Todo: Make solver options a lambda defined in the settings
     if not settings.use_sqp_solver:

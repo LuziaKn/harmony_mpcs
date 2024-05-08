@@ -184,7 +184,7 @@ class MPCPlanner(object):
         if self._exitflag == 1 or self._exitflag == 0:
             action = self._output[1,self._nu + self._nx-3:]
         else: 
-            action = np.array([0,0,0])
+            action = np.array([0.,0.,0.])
             self._output = np.zeros((self._N, self._nx + self._nu))
             self._output[:,self._nu:self._nu+self._nx] = self._xinit
 
@@ -195,6 +195,6 @@ class MPCPlanner(object):
     def computeAction(self, obs):
         info = {'robot_radius': self._robot_radius}
         self._action, output = self.solve(obs, info)
-        print('output:', output, flush=True)
+        #print('output:', output, flush=True)
 
         return self._action, output, self._preprocessor._linear_constraints , self._preprocessor._closest_points#, exitflag, self.vel_limit
