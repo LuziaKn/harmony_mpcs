@@ -69,11 +69,13 @@ class FreeSpaceDecomposition(object):
         self,
         number_constraints: int = 10,
         max_radius: float = 1.0,
+        min_radius: float = 0.2,
     ):
         self._number_constraints = number_constraints
         self._max_radius = max_radius
+        self._min_radius = min_radius
         self._max_height = 0.5
-        self._min_height = 0.1
+        self._min_height = 0
         self._constraints = []
 
     def set_position(self, position: np.ndarray):
@@ -88,9 +90,13 @@ class FreeSpaceDecomposition(object):
         dists = np.linalg.norm(points - self._position, axis=1)
         idx = np.argsort(dists)
         points = points[idx]
-        points = points[dists[idx] < self._max_radius]
-        points = points[points[:,2] < self._max_height]
-        points = points[points[:,2] > self._min_height]
+        points = points[dists[idx] <= self._max_radius]
+        dists = np.linalg.norm(points - self._position, axis=1)
+        idx = np.argsort(dists)
+        points = points[idx]
+        points = points[dists[idx] >= self._min_radius]
+        points = points[points[:,2] <= self._max_height]
+        points = points[points[:,2] >= self._min_height]
     
         while (
             points.size > 0

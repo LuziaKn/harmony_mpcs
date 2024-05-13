@@ -51,6 +51,7 @@ def convert_laserscan_to_pointcloud(laserscan_msg):
     points = np.zeros((len(ranges), 3))
     points[:, 0] = ranges * np.cos(angles)  # x = r * cos(theta)
     points[:, 1] = ranges * np.sin(angles)  # y = r * sin(theta)
-    # Create PointCloud2 message
+
+
 
     return points
