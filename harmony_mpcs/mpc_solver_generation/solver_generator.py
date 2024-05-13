@@ -158,6 +158,9 @@ class SolverGenerator(object):
         options.nlp.integrator.nodes = 5
         options.solver_timeout = 1
         options.noVariableElimination = 1
+        # FOR FLOATING LICENSES
+        options.license.use_floating_license = 1
+        options.embedded_timing = 1
         #options.init = 1 # Warm start?
 
         # Todo: Make solver options a lambda defined in the settings

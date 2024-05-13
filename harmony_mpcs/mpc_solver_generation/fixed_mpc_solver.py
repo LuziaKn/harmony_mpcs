@@ -20,6 +20,8 @@ import harmony_mpcs.mpc_solver_generation.objective as objective
 
 import harmony_mpcs.mpc_solver_generation.fixed_mpc_settings as settings
 
+
+
 # Press the green button in the gutter to run the script.
 def generate_solver(current_dir, save_dir):
 
@@ -111,10 +113,11 @@ def generate_solver(current_dir, save_dir):
     options.nlp.integrator.nodes = 5
     options.solver_timeout = 1
     options.noVariableElimination = 1
+    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
     #options.init = 1 # Warm start?
     # for use with docker
     options.license.use_floating_license = 1
-    options.license.floating_license_server = 'host.docker.internal'
+    #options.license.floating_license_server = 'host.docker.internal'
     options.embedded_timing = 1
     #options.platform = "platform_name"
 
@@ -159,12 +162,13 @@ def generate_solver(current_dir, save_dir):
 
 
     if generate_solver:
-        print("--- Generating solver ---")
+        print("--- Generating solver ---!!!!!!!!!!!!!!!!!!!!")
 
         # Remove the previous solver
         solver_path = current_dir + "/" + settings.robot_config.name + 'FORCESNLPsolver_fixed/'
         new_solver_path = save_dir + "/" + settings.robot_config.name + 'FORCESNLPsolver_fixed'
         print(new_solver_path)
+        
 
         #print("Path of the new solver: {}".format(new_solver_path))
         if os.path.exists(new_solver_path) and os.path.isdir(new_solver_path):

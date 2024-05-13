@@ -54,6 +54,7 @@ class MPCPreprocessor(object):
         halfplanes = []
 
         self._linear_constr_fixed_over_horizon = False
+        print('N', self._N,flush=True)
         for j in range(self._N):
             if not self._linear_constr_fixed_over_horizon:
                  x_ref = previous_plan[j,self._nu:self._nu+3]

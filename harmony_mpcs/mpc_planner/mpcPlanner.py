@@ -169,14 +169,24 @@ class MPCPlanner(object):
         problem["xinit"] = self._xinit
         problem["x0"] = self._x0.flatten()[:]
         problem["all_parameters"] = self._params
+        print('x0:', self._x0.shape, flush=True)
+        
 
         if 'ros1' in self._mode:
             self._output, self._exitflag, info = self._solver.solve(problem)
         elif 'ros2' in self._mode:
-            self.output, self._exitflag = self._solver_function(problem)
+            self._output, self._exitflag = self._solver_function(problem)
             print('ros2 reached', flush=True)
+            self._output = np.reshape(self._output, (self._N, -1))
+            #print('output:', self._output.shape, flush=True)
+            #self._output = np.reshape(self._output, (self._N, -1))
+            
+            #print('output:', self._output.shape, flush=True)
+            
+
         if isinstance(self._output, dict):
             self._output = output2array(self._output)
+        
 
         if self._exitflag < 0:
             print('exit flag:', self._exitflag)
