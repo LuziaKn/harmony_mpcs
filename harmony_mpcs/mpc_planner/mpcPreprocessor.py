@@ -35,6 +35,8 @@ class MPCPreprocessor(object):
 
         self._fsd.set_position(pos_lidar_3d)
         self._fsd.compute_constraints(point_cloud)
+        self._lidar_pc = self._fsd.lidar_pc()
+        
         return list(self._fsd.asdict().values()), self._fsd.constraints(), self._fsd.points()    
     
     def preprocess(self, obs, info, previous_plan=None):

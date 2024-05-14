@@ -1,6 +1,7 @@
 """Module for free space decomposition."""
 import numpy as np
 from typing import Callable, List
+from copy import deepcopy
 
 
 class HalfPlane(object):
@@ -97,6 +98,8 @@ class FreeSpaceDecomposition(object):
         points = points[dists[idx] >= self._min_radius]
         points = points[points[:,2] <= self._max_height]
         points = points[points[:,2] >= self._min_height]
+        
+        self._lidar_pc = deepcopy(points)
     
         while (
             points.size > 0
@@ -117,6 +120,9 @@ class FreeSpaceDecomposition(object):
 
     def points(self):
         return self._closest_points
+    
+    def lidar_pc(self):
+        return self._lidar_pc
     
     def asdict(self):
         constraint_dict = {}

@@ -207,4 +207,4 @@ class MPCPlanner(object):
         self._action, output = self.solve(obs, info)
         #print('output:', output, flush=True)
 
-        return self._action, output, self._preprocessor._linear_constraints , self._preprocessor._closest_points#, exitflag, self.vel_limit
+        return self._action, output, self._preprocessor._linear_constraints , self._preprocessor._closest_points, self._preprocessor._lidar_pc#, exitflag, self.vel_limit
