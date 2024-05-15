@@ -69,23 +69,25 @@ class FreeSpaceDecomposition(object):
     def __init__(
         self,
         number_constraints: int = 10,
-        max_radius: float = 1.0,
-        min_radius: float = 0.2,
+        max_radius: float = 5.0,
+        min_radius: float = 0.4,
+        lidar_2d: bool = True,
     ):
         self._number_constraints = number_constraints
         self._max_radius = max_radius
         self._min_radius = min_radius
-        self._max_height = 0.5
-        self._min_height = 0
+        self._max_height = np.inf
+        self._min_height = - np.inf
         self._constraints = []
+        self._lidar_2d = lidar_2d
 
     def set_position(self, position: np.ndarray):
         self._position = position
 
-    def compute_constraints(
-        self,
-        points: np.ndarray,
-    ):
+    def filter_point_cloud(self, points: np.ndarray):
+        if self._lidar_2d:
+            points = points[:,:2]
+            self._position = self._position[:2]
         self._constraints = []
         self._closest_points = []
         dists = np.linalg.norm(points - self._position, axis=1)
@@ -96,11 +98,22 @@ class FreeSpaceDecomposition(object):
         idx = np.argsort(dists)
         points = points[idx]
         points = points[dists[idx] >= self._min_radius]
-        points = points[points[:,2] <= self._max_height]
-        points = points[points[:,2] >= self._min_height]
+        if not self._lidar_2d:
+            points = points[points[:,2] <= self._max_height]
+            points = points[points[:,2] >= self._min_height]
         
+        if self._lidar_2d:
+            points = np.concatenate((points, np.zeros((points.shape[0],1))), axis=1)
+            self._position = np.concatenate((self._position, np.zeros(1)))
         self._lidar_pc = deepcopy(points)
+        return points
+        
     
+    def compute_constraints(
+        self,
+        points: np.ndarray,
+    ):
+        
         while (
             points.size > 0
             and len(self._constraints) < self._number_constraints

@@ -50,6 +50,10 @@ class SolverSettings(object):
         print(self._params)
         self._npar = self._params.n_par()
         self._nh = self._modules.number_of_constraints()
+        
+        if 'ros' in config.keys():
+            self._floating =  config['ros']['floating_license']
+        else: self._floating = False
 
     def set_ineq_constr_dynamic(self, n_discs, n_obst):
         self._modules.add_module(control_modules.EllipsoidalConstraintModule(self._params, n_discs=n_discs, n_obst=n_obst))
@@ -58,6 +62,6 @@ class SolverSettings(object):
         self._modules.add_module(control_modules.LinearConstraintModule(self._params, n_discs=n_discs, n_obst=n_obst, horizon_length = self._N+2))
 
     def set_obj(self):
-        self._modules.add_module(control_modules.FixedMPCModule(self._params, self._N)) # Track a reference path
+        self._modules.add_module(control_modules.FixedMPCModule(self._params, self._N, n_static_obst=self._n_static_obst, n_discs=self._n_discs)) # Track a reference path
 
 

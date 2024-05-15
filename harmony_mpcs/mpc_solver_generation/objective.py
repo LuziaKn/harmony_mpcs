@@ -6,7 +6,7 @@ Objective.py defines the objective for the solver. Currently it is system specif
 import numpy as np
 import casadi as ca
 from harmony_mpcs.mpc_solver_generation.helpers import approx_max, approx_min, get_min_angle_between_vec
-
+import harmony_mpcs.mpc_solver_generation.helpers as helpers
 
 
 
@@ -30,9 +30,11 @@ class QuadraticCost(CostTerm):
 
 class FixedMPCObjective:
 
-    def __init__(self, params, N):
+    def __init__(self, params, N, n_obst, n_discs):
         self.define_parameters(params)
         self._N = N
+        self._n_obst = n_obst
+        self._n_discs = n_discs
 
     def define_parameters(self, params):
         params.add_parameter("goal_position", 3)
@@ -43,6 +45,7 @@ class FixedMPCObjective:
         params.add_parameter("Wvel_orientation")
         params.add_parameter("Wv")
         params.add_parameter("Wa")
+        params.add_parameter("Wstatic")
   
     def get_value(self, x, u, settings, stage_idx):
 
@@ -70,10 +73,36 @@ class FixedMPCObjective:
 
         Wgoal_position = getattr(settings._params, "Wgoal_position")
         Wgoal_orientation = getattr(settings._params, "Wgoal_orientation")
+        
+        rotation_car = helpers.rotation_matrix(psi)
+        dist2constraint = 0
+        for obst_id in range(self._n_obst):
+            # A'x <= b
+            a1_all = getattr(settings._params, "linear_constraint_" + str(obst_id) + "_a1")
+            a2_all = getattr(settings._params, "linear_constraint_" + str(obst_id) + "_a2")
+            b_all= getattr(settings._params, "linear_constraint_" + str(obst_id) + "_b")
+            
+            for disc in range(self._n_discs):
+                disc_x = getattr(settings._params, "linear_constraint_" + str(obst_id) + "disc_offset")[0]
+                disc_relative_pos = ca.vertcat(disc_x, 0)
+                disc_pos = pos + rotation_car @ disc_relative_pos
+
+                a1 = a1_all[disc]
+                a2 = a2_all[disc]
+                b = b_all[disc]
+                
+                disc_r = getattr(settings._params, "disc_" + str(disc) + "_r")
+                
+                dist2constraint += (a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r)
+
+                
 
         Wvel_orientation = getattr(settings._params, "Wvel_orientation")
         Wv = getattr(settings._params, "Wv")
         Wa = getattr(settings._params, "Wa")
+        Wstatic = getattr(settings._params, "Wstatic")
+        
+        
     
         # Derive position error
         goal_dist_error = (pos[0] - goal_position[0]) ** 2 + (pos[1] - goal_position[1]) ** 2
@@ -92,9 +121,9 @@ class FixedMPCObjective:
            
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self._N + 1:
-                cost = Wgoal_position * goal_dist_error  + Wgoal_orientation * goal_orientation_error
+                cost = Wgoal_position * goal_dist_error  + Wgoal_orientation * goal_orientation_error + Wstatic * dist2constraint
             else:
-                cost =  +  Wvel_orientation * vel_orientation_error+  Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y
+                cost =  +  Wvel_orientation * vel_orientation_error+  Wstatic*dist2constraint+ Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
         else:
             print("not implemented yet")
 

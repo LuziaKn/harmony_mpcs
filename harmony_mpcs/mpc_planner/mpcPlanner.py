@@ -96,7 +96,9 @@ class MPCPlanner(object):
             k = N_iter * self._npar
             selected_weights = {key: value for key, value in self._map_runtime_par.items() if key.startswith('W')}
             
+            
             for key, _ in selected_weights.items():
+                print('!!!!!!!!!!!!!!!!!!!!', key, flush=True)
                 try:
                     self._params[k+self._map_runtime_par[key][0]] = self._config['weights'][key]
                 except Exception as e:
@@ -207,4 +209,4 @@ class MPCPlanner(object):
         self._action, output = self.solve(obs, info)
         #print('output:', output, flush=True)
 
-        return self._action, output, self._preprocessor._linear_constraints , self._preprocessor._closest_points, self._preprocessor._lidar_pc#, exitflag, self.vel_limit
+        return self._action, output, self._exitflag, self._preprocessor._linear_constraints , self._preprocessor._closest_points, self._preprocessor._lidar_pc#, exitflag, self.vel_limit

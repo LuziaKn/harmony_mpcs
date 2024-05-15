@@ -34,6 +34,7 @@ class MPCPreprocessor(object):
         #print(robot_state)
 
         self._fsd.set_position(pos_lidar_3d)
+        point_cloud = self._fsd.filter_point_cloud(point_cloud)
         self._fsd.compute_constraints(point_cloud)
         self._lidar_pc = self._fsd.lidar_pc()
         
