@@ -59,6 +59,7 @@ class SolverGenerator(object):
         solver.lb = model.lower_bound()
         solver.ub = model.upper_bound()
 
+        print(model.lower_bound())
         # Functions used in the optimization
         # Note that we use solver.N = N_bar here!
         for i in range(0, solver.N):
@@ -87,7 +88,7 @@ class SolverGenerator(object):
                 solver.hl[i] = self.solver_settings._modules.constraint_manager.lower_bound
             else:
                 solver.nh[i] = 0  # No constraints here
-
+  
         # Equalities are specified on all stages
         solver.continuous_dynamics = lambda x, u, p: model.continuous_model(x, u, p, self.solver_settings)
         solver.E = np.concatenate([np.zeros((model.nx, model.nu)), np.eye(model.nx)], axis=1)

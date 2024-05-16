@@ -70,6 +70,8 @@ class MPCPlanner(object):
 
         self._preprocessor = MPCPreprocessor(config, self._N, self._nu, self._nx)
         self._predictor = MPCDynObstPredictor(config)
+        
+        self._debug = self._config['debug']
 
 
     def reset(self):
@@ -84,7 +86,7 @@ class MPCPlanner(object):
     def setX0(self, initialize_type="current_state", initial_step= True):
         if initialize_type == "current_state" or initialize_type == "previous_plan" and initial_step:
             for i in range(self._N):
-                self._x0[i][0 : self._nx] = self._xinit
+                self._x0[i][self._nu:] = self._xinit
                 self._initial_step = False
         elif initialize_type == "previous_plan":
             self.shiftHorizon(self.output)
@@ -131,8 +133,9 @@ class MPCPlanner(object):
                 self._params[k + self._map_runtime_par[name + "_a1"][0]] = lin_constr[N_iter][obst_id][0]
                 self._params[k + self._map_runtime_par[name + "_a2"][0]] = lin_constr[N_iter][obst_id][1]
                 self._params[k + self._map_runtime_par[name + "_b"][0]] = lin_constr[N_iter][obst_id][-1]
-                self._params[k + self._map_runtime_par[name + "disc_r"][0]] = r_body
-                self._params[k + self._map_runtime_par[name + "disc_offset"][0]] = 0
+ 
+                #print('constraint a1 obst' + str(obst_id), self._params[k + self._map_runtime_par[name + "_a1"][0]], flush=True)
+
            
     def setEllipsoidConstraints(self, pos_dynamic_obst, vel_dynamic_obst):
         major = 0
@@ -173,15 +176,24 @@ class MPCPlanner(object):
         problem["xinit"] = self._xinit
         problem["x0"] = self._x0.flatten()[:]
         problem["all_parameters"] = self._params
-        #print('x0:', self._x0.shape, flush=True)
-        #print('params:', self._params, flush=True)
+        if self._debug:
+            print('x0:', self._x0, flush=True)
+            #print('xinit', self._xinit, flush=True)
+            #print(self._nu)
+            #self.print_parameters()
         
-
+        self._debug = False
+        if self._debug:
+            from harmony_mpcs.mpc_solver_generation.inequality import LinearConstraints
+            
+        
+        
         if 'ros1' in self._mode:
             self._output, self._exitflag, info = self._solver.solve(problem)
         elif 'ros2' in self._mode:
             self._output, self._exitflag = self._solver_function(problem)
-            print('ros2 reached', flush=True)
+            if self._debug:
+                print('mpcs planner solve function reached (ros2)', flush=True)
             self._output = np.reshape(self._output, (self._N, -1))
             #print('output:', self._output.shape, flush=True)
             #self._output = np.reshape(self._output, (self._N, -1))
@@ -213,3 +225,11 @@ class MPCPlanner(object):
         #print('output:', output, flush=True)
 
         return self._action, output, self._exitflag, self._preprocessor._linear_constraints , self._preprocessor._closest_points, self._preprocessor._lidar_pc#, exitflag, self.vel_limit
+    
+    def print_parameters(self):
+        for N_iter in range(self._N):
+            k = N_iter * self._npar
+       
+            for key, value in self._map_runtime_par.items():
+                for i in range(len(value)):
+                    print(key, self._params[k+value[i]])

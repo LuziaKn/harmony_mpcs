@@ -7,12 +7,16 @@ class MPCPreprocessor(object):
 
     def __init__(self, config, N, nu, nx):
         # collision avoidance
+        self._linear_constr_fixed_over_horizon = config['linear_constr_fixed_over_horizon']
         self._n_obstacles = config['n_static_obst']
-        self._max_radius = 2
+        self._max_radius = 4
+        self._min_radius = 0.4
         self._N = N
         self._nu = nu
         self._nx = nx
-        self._fsd = FreeSpaceDecomposition(number_constraints=self._n_obstacles, max_radius=self._max_radius)
+        self._fsd = FreeSpaceDecomposition(number_constraints=self._n_obstacles,
+                                           max_radius=self._max_radius,
+                                           min_radius=self._min_radius)
         self
 
     def define_position(self, robot_state: np.ndarray, trans_lidar: np.ndarray):
@@ -61,12 +65,9 @@ class MPCPreprocessor(object):
         self._fsd.set_position(pos_lidar_3d)
         point_cloud = self._fsd.filter_point_cloud(point_cloud)
       
-
         self._linear_constraints = []
         halfplanes = []
 
-        self._linear_constr_fixed_over_horizon = False
-        print('N', self._N,flush=True)
         for j in range(self._N):
             if not self._linear_constr_fixed_over_horizon:
                  x_ref = previous_plan[j,self._nu:self._nu+3]

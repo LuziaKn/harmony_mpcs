@@ -140,7 +140,7 @@ class PointMass_2order_Model(DynamicModel):
         self.states_from_sensor_at_infeasible = [True, True, True, True, True, True]  # False variables are guessed 0 at infeasible
 
         self.inputs = ['a_x', 'a_y', 'alpha', 'slack']
-        self.inputs_to_vehicle = [True, True, False]
+        self.inputs_to_vehicle = [True, True, True, False]
         self.possible_inputs_to_vehicle = ['a_x', 'a_y']
 
     def continuous_model(self, x, u, *args):

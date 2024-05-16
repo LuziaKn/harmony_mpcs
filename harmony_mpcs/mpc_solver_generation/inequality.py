@@ -45,6 +45,8 @@ class LinearConstraints:
         self._n_discs = n_discs
         self.params = params
         self.name = "linear_constr"
+        print('n_discs', self._n_discs)
+        print('n_static_obst', self._n_obst)
 
         self.nh = (self._n_obst) * n_discs
 
@@ -53,21 +55,18 @@ class LinearConstraints:
             params.add_parameter(self.constraint_name(obst_id) + "_a1" , 1) # a1 a2 b
             params.add_parameter(self.constraint_name(obst_id) + "_a2" , 1)  # a1 a2 b
             params.add_parameter(self.constraint_name(obst_id) + "_b" , 1)  # a1 a2 b
-            params.add_parameter(self.constraint_name(obst_id)  + "disc_offset", 1)
-            params.add_parameter(self.constraint_name(obst_id)  + "disc_r", 1)
-
 
     def constraint_name(self, obst_id):
         return "linear_constraint_" + str(obst_id)
 
     def append_lower_bound(self, lower_bound):
-        for _ in range(0, self._n_obst):
-            for disc in range(0, self._n_discs):
+        for _ in range(self._n_obst):
+            for disc in range(self._n_discs):
                 lower_bound.append(-np.inf)
 
     def append_upper_bound(self, upper_bound):
-        for _ in range(0, self._n_obst):
-            for disc in range(0, self._n_discs):
+        for _ in range(self._n_obst):
+            for disc in range(self._n_discs):
                 upper_bound.append(0.0)
 
     def append_constraints(self, constraints, z, param, settings, model):
@@ -88,7 +87,7 @@ class LinearConstraints:
             a2_all = getattr(settings._params, self.constraint_name(obst_id) + "_a2")
             b_all= getattr(settings._params, self.constraint_name(obst_id) + "_b")
             for disc in range(self._n_discs):
-                disc_x = getattr(settings._params, self.constraint_name(obst_id) + "disc_offset")[0]
+                disc_x = getattr(settings._params, "disc_" + str(disc) + "_offset")[0]
                 disc_relative_pos = ca.vertcat(disc_x, 0)
                 disc_pos = pos + rotation_car @ disc_relative_pos
 
@@ -97,7 +96,7 @@ class LinearConstraints:
                 b = b_all[disc]
 
                 disc_r = getattr(settings._params, "disc_" + str(disc) + "_r")
-                constraints.append(a1 * pos[0] + a2 * pos[1] - b + disc_r)
+                constraints.append(a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r)
 
 
 

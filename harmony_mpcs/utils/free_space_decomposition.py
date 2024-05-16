@@ -88,7 +88,7 @@ class FreeSpaceDecomposition(object):
         if self._lidar_2d:
             points = points[:,:2]
             self._position = self._position[:2]
-            print('self._position', self._position, flush=True)
+            #print('self._position', self._position, flush=True)
         self._constraints = []
         self._closest_points = []
         dists = np.linalg.norm(points - self._position, axis=1)
