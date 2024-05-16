@@ -1,0 +1,71 @@
+type: mpc
+pi: 3.14159
+mpc:
+  model_name: pointRobot
+  solver_name: pointRobot_fixed_solver
+  n: 3
+  nu: 4
+  time_horizon: 22
+  time_step: 0.1
+  slack: False
+  interval: 1
+  initialization: current_state
+  constraints:
+    - SelfCollisionAvoidanceConstraints
+    - JointLimitConstraints
+    - InputLimitConstraints
+    - VelLimitConstraints
+  objectives:
+    - GoalReaching
+  weights:
+    Wgoal_position: 1
+    Wgoal_orientation: 1
+    Wvel_orientation: 0
+    Wa: 0.01
+    Wv: 0
+  n_static_obst: 1
+  n_dynamic_obst: 1
+  control_mode: "vel"
+pedestrians:
+  radius: 0.6
+robot:
+  robot_name: dingo
+  radius: 0.5
+  state_constraints:
+      lower_bounds:
+        x: -20
+        y: -20
+        psi: -6.3
+        v_x: -1.2
+        v_y: -1.2
+        w: -1
+      upper_bounds:
+        x: 20
+        y: 20
+        psi: 6.3
+        v_x: 1.2
+        v_y: 1.2
+        w: 1
+  input_constraints:
+      lower_bounds:
+        a_x: -0.5
+        a_y: -0.5
+        alpha: -1
+        slack: 0
+      upper_bounds:
+        a_x: 0.5
+        a_y: 0.5
+        alpha: 1
+        slack: 0.2
+  collision_links:
+    - base_link
+  selfCollision:
+    pairs:  []
+  urdf_file: pointRobot.urdf
+  root_link: ee_link
+  end_link: base_link
+  base_type: holonomic
+example:
+  debug: False
+env:
+  dt: 0.1

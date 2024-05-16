@@ -20,6 +20,8 @@ class SolverSettings(object):
         self._model_name = config['mpc']['model_name']
         self._robot_config = config['robot']
 
+        self._solver_name = config['mpc']['solver_name']
+
         self._N = config['mpc']['time_horizon']     
         self._N_bar = self._N + 2          # MPC Horizon
         self._dt = config['mpc']['time_step']                 # Timestep of the integrator

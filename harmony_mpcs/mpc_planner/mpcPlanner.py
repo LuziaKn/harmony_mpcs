@@ -9,7 +9,13 @@ from harmony_mpcs.mpc_planner.mpcDynObstPredictor import MPCDynObstPredictor
 
 class MPCPlanner(object):
 
-    def __init__(self, solverDir=None, solverName=None, solver_function=None, config=None, robot_config=None, ped_config=None, mode='gazebo_ros1'):
+    def __init__(self, solverDir=None,
+                 solverName=None,
+                 solver_function=None,
+                 config=None,
+                 robot_config=None,
+                 ped_config=None,
+                 mode='python_less_than3.10'):
 
         if config is not None and robot_config is not None and ped_config is not None:
             self._config = config
@@ -40,8 +46,6 @@ class MPCPlanner(object):
                 self._properties = data['properties']
                 self._map_runtime_par = data['map_runtime_par']
                 self._modules = data['modules']
-            except FileNotFoundError:
-                print(f"File {params_file_path} not found.")
             except Exception as e:
                 print(f"An error occurred: {e}")
 

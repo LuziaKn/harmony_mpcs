@@ -54,7 +54,7 @@ pip install -e .
 Run the example
 
 ```bash
-python dingo_example.py
+python dingo_urdfenvs_example.py
 ```
 
 The parameters of the mpc can be adapted in the config file in examples/config.

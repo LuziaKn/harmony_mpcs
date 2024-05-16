@@ -1,14 +1,5 @@
 import sys, os, shutil
 
-sys.path.append("../")
-sys.path.append("")
-
-sys.path.append('/home/luzia/code/forces_pro_client/') #add path to forces_pro files here ToDo make generic
-import harmony_mpcs.mpc_solver_generation.helpers as helpers
-
-# If your forces is in this directory add it
-helpers.load_forces_path()
-
 import numpy as np
 import pickle
 import forcespro.nlp
@@ -109,8 +100,8 @@ class SolverGenerator(object):
         print(self.solver_settings._params)
 
         # Remove the previous solver
-        name = self.solver_settings._model_name + 'FORCESNLPsolver_fixed/'
-        solver_path = self._current_dir + "/" + self.solver_settings._model_name + 'FORCESNLPsolver_fixed/'
+        name = self.solver_settings._solver_name
+        solver_path = self._current_dir + "/" + self.solver_settings._solver_name + '/'
         new_solver_path = self._solver_dir + "/" 
         print(new_solver_path)
 
@@ -148,7 +139,7 @@ class SolverGenerator(object):
 
     def set_solver_options(self):
         # Set solver options
-        options = forcespro.CodeOptions(self.solver_settings._model_name + 'FORCESNLPsolver_fixed')
+        options = forcespro.CodeOptions(self.solver_settings._solver_name)
         options.printlevel = 0  # 1 = timings, 2 = print progress
         options.optlevel = 0  # 0 no optimization, 1 optimize for size, 2 optimize for speed, 3 optimize for size & speed
         options.timing = 1

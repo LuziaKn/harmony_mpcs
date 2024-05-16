@@ -61,20 +61,6 @@ class GOMPCModule(Module):
         self.objectives = []
         self.objectives.append(objective.GOMPCObjective(params, system, config))
 
-class AdaptiveSimulationModule(Module):
-
-    """
-    Navigate to a subgoal/goal
-    """
-
-    def __init__(self, params, system, config):
-        self.module_name = "NOTDEFINED"  # Needs to correspond to the c++ name of the module
-        self.import_name = "NOTDEFINED"
-        self.type = "objective"
-        self.system = system
-
-        self.objectives = []
-        self.objectives.append(objective.AdaptiveSimulationObjective(params, system, config))
 
 class FixedMPCModule(Module):
 
