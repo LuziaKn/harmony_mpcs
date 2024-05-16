@@ -103,7 +103,7 @@ class SolverGenerator(object):
 
 
     def generate_solver(self):
-        print("--- Generating solver -!!!!!!!!!!!!--")
+        print("--- Generating solver -!!!!!!!!!!!!G--")
 
         self.define_problem()
         print(self.solver_settings._params)

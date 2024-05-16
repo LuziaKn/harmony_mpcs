@@ -50,9 +50,9 @@ class LinearConstraints:
 
         # @Todo: Be able to add multiple sets of constraints
         for obst_id in range(self._n_obst):
-            params.add_parameter(self.constraint_name(obst_id) + "_a1" , self._n_obst) # a1 a2 b
-            params.add_parameter(self.constraint_name(obst_id) + "_a2" , self._n_obst)  # a1 a2 b
-            params.add_parameter(self.constraint_name(obst_id) + "_b" , self._n_obst)  # a1 a2 b
+            params.add_parameter(self.constraint_name(obst_id) + "_a1" , 1) # a1 a2 b
+            params.add_parameter(self.constraint_name(obst_id) + "_a2" , 1)  # a1 a2 b
+            params.add_parameter(self.constraint_name(obst_id) + "_b" , 1)  # a1 a2 b
             params.add_parameter(self.constraint_name(obst_id)  + "disc_offset", 1)
             params.add_parameter(self.constraint_name(obst_id)  + "disc_r", 1)
 

@@ -131,6 +131,8 @@ class MPCPlanner(object):
                 self._params[k + self._map_runtime_par[name + "_a1"][0]] = lin_constr[N_iter][obst_id][0]
                 self._params[k + self._map_runtime_par[name + "_a2"][0]] = lin_constr[N_iter][obst_id][1]
                 self._params[k + self._map_runtime_par[name + "_b"][0]] = lin_constr[N_iter][obst_id][-1]
+                self._params[k + self._map_runtime_par[name + "disc_r"][0]] = r_body
+                self._params[k + self._map_runtime_par[name + "disc_offset"][0]] = 0
            
     def setEllipsoidConstraints(self, pos_dynamic_obst, vel_dynamic_obst):
         major = 0
@@ -171,7 +173,8 @@ class MPCPlanner(object):
         problem["xinit"] = self._xinit
         problem["x0"] = self._x0.flatten()[:]
         problem["all_parameters"] = self._params
-        print('x0:', self._x0.shape, flush=True)
+        #print('x0:', self._x0.shape, flush=True)
+        #print('params:', self._params, flush=True)
         
 
         if 'ros1' in self._mode:

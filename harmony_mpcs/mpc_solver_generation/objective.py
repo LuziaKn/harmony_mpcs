@@ -74,26 +74,26 @@ class FixedMPCObjective:
         Wgoal_position = getattr(settings._params, "Wgoal_position")
         Wgoal_orientation = getattr(settings._params, "Wgoal_orientation")
         
-        rotation_car = helpers.rotation_matrix(psi)
-        dist2constraint = 0
-        for obst_id in range(self._n_obst):
-            # A'x <= b
-            a1_all = getattr(settings._params, "linear_constraint_" + str(obst_id) + "_a1")
-            a2_all = getattr(settings._params, "linear_constraint_" + str(obst_id) + "_a2")
-            b_all= getattr(settings._params, "linear_constraint_" + str(obst_id) + "_b")
+        # rotation_car = helpers.rotation_matrix(psi)
+        # dist2constraint = 0
+        # for obst_id in range(self._n_obst):
+        #     # A'x <= b
+        #     a1_all = getattr(settings._params, "linear_constraint_" + str(obst_id) + "_a1")
+        #     a2_all = getattr(settings._params, "linear_constraint_" + str(obst_id) + "_a2")
+        #     b_all= getattr(settings._params, "linear_constraint_" + str(obst_id) + "_b")
             
-            for disc in range(self._n_discs):
-                disc_x = getattr(settings._params, "linear_constraint_" + str(obst_id) + "disc_offset")[0]
-                disc_relative_pos = ca.vertcat(disc_x, 0)
-                disc_pos = pos + rotation_car @ disc_relative_pos
+        #     for disc in range(self._n_discs):
+        #         disc_x = getattr(settings._params, "linear_constraint_" + str(obst_id) + "disc_offset")[0]
+        #         disc_relative_pos = ca.vertcat(disc_x, 0)
+        #         disc_pos = pos + rotation_car @ disc_relative_pos
 
-                a1 = a1_all[disc]
-                a2 = a2_all[disc]
-                b = b_all[disc]
+        #         a1 = a1_all[disc]
+        #         a2 = a2_all[disc]
+        #         b = b_all[disc]
                 
-                disc_r = getattr(settings._params, "disc_" + str(disc) + "_r")
+        #         disc_r = getattr(settings._params, "disc_" + str(disc) + "_r")
                 
-                dist2constraint += (a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r)
+        #         dist2constraint += (a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r)
 
                 
 
@@ -106,7 +106,7 @@ class FixedMPCObjective:
     
         # Derive position error
         goal_dist_error = (pos[0] - goal_position[0]) ** 2 + (pos[1] - goal_position[1]) ** 2
-        initial_goal_dist_error = (initial_pose[0] - goal_position[0]) ** 2 + (initial_pose[1] - goal_position[1]) ** 2
+        initial_goal_dist_error = (initial_pose[0] - goal_position[0]) ** 2 + (initial_pose[1] - goal_position[1]) ** 2 + 0.01
         goal_dist_error_normalized = goal_dist_error/initial_goal_dist_error    
 
         # derive velocity vector angle
@@ -121,9 +121,9 @@ class FixedMPCObjective:
            
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self._N + 1:
-                cost = Wgoal_position * goal_dist_error  + Wgoal_orientation * goal_orientation_error + Wstatic * dist2constraint
+                cost = Wgoal_position * goal_dist_error  + Wgoal_orientation * goal_orientation_error + Wstatic * 5
             else:
-                cost =  +  Wvel_orientation * vel_orientation_error+  Wstatic*dist2constraint+ Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
+                cost =  Wvel_orientation * vel_orientation_error+  Wstatic*5+ Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
         else:
             print("not implemented yet")
 
