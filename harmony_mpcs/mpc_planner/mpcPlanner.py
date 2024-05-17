@@ -183,9 +183,7 @@ class MPCPlanner(object):
         params_dict = self._preprocessor.get_params_dict()
         
         goal_dist = np.linalg.norm(self._xinit[:2] - self._preprocessor._goal_position[:2])
-        print('goal_dist:',  goal_dist, flush=True)
         if goal_dist < self._config['goal_threshold']:
-            print('in goal region', flush=True)
             self.setWeights(update_goal_region=True)
         else: 
             self.setWeights()

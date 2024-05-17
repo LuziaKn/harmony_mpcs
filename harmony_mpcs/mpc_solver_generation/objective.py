@@ -7,6 +7,7 @@ import numpy as np
 import casadi as ca
 from harmony_mpcs.mpc_solver_generation.helpers import approx_max, approx_min, get_min_angle_between_vec_squared
 import harmony_mpcs.mpc_solver_generation.helpers as helpers
+from harmony_mpcs.utils.utils import min_angle_diff
 
 
 
@@ -30,10 +31,11 @@ class QuadraticCost(CostTerm):
 
 class FixedMPCObjective:
 
-    def __init__(self, params, N, n_obst, n_discs):
+    def __init__(self, params, N, n_static_obst, n_dyn_obst, n_discs):
         self.define_parameters(params)
         self._N = N
-        self._n_obst = n_obst
+        self._n_static_obst = n_static_obst
+        self._n_dyn_obst = n_dyn_obst
         self._n_discs = n_discs
 
     def define_parameters(self, params):
@@ -87,7 +89,7 @@ class FixedMPCObjective:
         goal_dist_error_normalized = goal_dist_error/initial_goal_dist_error    
 
         ## GOAL ORIENTATION COST 
-        goal_orientation_error = get_min_angle_between_vec_squared(psi,goal_orientation) / (get_min_angle_between_vec_squared(initial_pose[2],goal_orientation) + 0.01)
+        goal_orientation_error = min_angle_diff(psi,goal_orientation)**2 / (min_angle_diff(initial_pose[2],goal_orientation)**2 + 0.01)
         
         ## VELOCITY ORIENTATION COST
         # derive velocity vector angle
@@ -96,11 +98,11 @@ class FixedMPCObjective:
 
         #vel_orientation = ca.if_else(v_x > 0.01, ca.atan2(v_y,v_x), ca.sign(v_y)*ca.pi/2)
 
-        vel_orientation_error = get_min_angle_between_vec_squared(psi,goal_direction_orientation)/(get_min_angle_between_vec_squared(initial_pose[2],goal_direction_orientation) + 0.01)
+        vel_orientation_error = min_angle_diff(psi,goal_direction_orientation)**2/(min_angle_diff(initial_pose[2],goal_direction_orientation)**2 + 0.01)
         
         rotation_car = helpers.rotation_matrix(psi)
         dist2constraint = 0
-        for obst_id in range(self._n_obst):
+        for obst_id in range(self._n_static_obst):
             # A'x <= b
             a1_all = getattr(settings._params, "linear_constraint_" + str(obst_id) + "_a1")
             a2_all = getattr(settings._params, "linear_constraint_" + str(obst_id) + "_a2")
@@ -126,14 +128,34 @@ class FixedMPCObjective:
                 dist2constraint += (a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r)
                 disc2constraint_initial = (a1 * disc_pos_initial[0] + a2 * disc_pos_initial[1] - b + disc_r)
         
-        dist2constraint = dist2constraint/self._n_discs/self._n_obst   
+        dist2constraint = dist2constraint/self._n_discs/self._n_static_obst   
+        
+        
+        ## DYNAMIC OBSTACLE COST
+        dyn_obst_cost = 0
+        for obst_id in range(self._n_dyn_obst):
+            obst_pos = getattr(settings._params, "ellipsoid_constraint_agent_" + str(obst_id) + "_pos")
+            for disc in range(self._n_discs):
+                disc_x = getattr(settings._params, "disc_" + str(disc) + "_offset")[0]
+                disc_relative_pos = ca.vertcat(disc_x, 0)
+                disc_pos = pos + rotation_car @ disc_relative_pos
+                
+                dist2obst = (disc_pos[0] - obst_pos[0]) ** 2 + (disc_pos[1] - obst_pos[1]) ** 2
+                dyn_obst_cost += 1/dist2obst
+            
+        dyn_obst_cost = dyn_obst_cost/self._n_discs/self._n_dyn_obst
+        
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self._N + 1:
                 cost = Wgoal_position * goal_dist_error + \
                     Wgoal_orientation * goal_orientation_error + \
-                    Wstatic * dist2constraint
+                    Wstatic * dist2constraint + \
+                    Wdynamic * dyn_obst_cost
             else:
-                cost =  Wvel_orientation * vel_orientation_error +  Wstatic*dist2constraint+ Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
+                cost =  Wvel_orientation * vel_orientation_error + \
+                    Wstatic*dist2constraint + \
+                    Wdynamic*dyn_obst_cost + \
+                    Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
         else:
             print("not implemented yet")
 

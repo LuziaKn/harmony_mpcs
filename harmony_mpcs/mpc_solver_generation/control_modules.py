@@ -82,14 +82,14 @@ class FixedMPCModule(Module):
     Navigate to a subgoal/goal
     """
 
-    def __init__(self, params, N, n_static_obst, n_discs):
+    def __init__(self, params, N, n_static_obst, n_dyn_obst, n_discs):
         self.module_name = "NOTDEFINED"  # Needs to correspond to the c++ name of the module
         self.import_name = "NOTDEFINED"
         self.type = "objective"
         #self.system = system
 
         self.objectives = []
-        self.objectives.append(objective.FixedMPCObjective(params, N, n_static_obst, n_discs))
+        self.objectives.append(objective.FixedMPCObjective(params, N, n_static_obst, n_dyn_obst, n_discs))
 
 class SF_MPCModule(Module):
 

@@ -26,7 +26,7 @@ class SolverSettings(object):
 
         # collision avoidance
         self._n_discs = 1
-        self._n_dynamic_obst = config['mpc']['n_dynamic_obst']
+        self._n_dyn_obst = config['mpc']['n_dynamic_obst']
         self._n_static_obst = config['mpc']['n_static_obst']
 
         self._use_sqp_solver = False      # Note: SQP for scenario has max_it = 1
@@ -44,7 +44,7 @@ class SolverSettings(object):
         self._weights = helpers.WeightStructure(self._params, weight_list)
 
         self.set_ineq_constraints(self._n_discs, self._n_static_obst)
-        self.set_ineq_constr_dynamic(self._n_discs, self._n_dynamic_obst)
+        self.set_ineq_constr_dynamic(self._n_discs, self._n_dyn_obst)
         self.set_obj()
 
         print(self._params)
@@ -62,6 +62,6 @@ class SolverSettings(object):
         self._modules.add_module(control_modules.LinearConstraintModule(self._params, n_discs=n_discs, n_obst=n_obst, horizon_length = self._N+2))
 
     def set_obj(self):
-        self._modules.add_module(control_modules.FixedMPCModule(self._params, self._N, n_static_obst=self._n_static_obst, n_discs=self._n_discs)) # Track a reference path
+        self._modules.add_module(control_modules.FixedMPCModule(self._params, self._N, n_static_obst=self._n_static_obst, n_dyn_obst=self._n_dyn_obst, n_discs=self._n_discs)) # Track a reference path
 
 
