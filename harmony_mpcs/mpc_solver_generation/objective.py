@@ -5,7 +5,7 @@ Objective.py defines the objective for the solver. Currently it is system specif
 
 import numpy as np
 import casadi as ca
-from harmony_mpcs.mpc_solver_generation.helpers import approx_max, approx_min, get_min_angle_between_vec
+from harmony_mpcs.mpc_solver_generation.helpers import approx_max, approx_min, get_min_angle_between_vec_squared
 import harmony_mpcs.mpc_solver_generation.helpers as helpers
 
 
@@ -87,7 +87,7 @@ class FixedMPCObjective:
         goal_dist_error_normalized = goal_dist_error/initial_goal_dist_error    
 
         ## GOAL ORIENTATION COST 
-        goal_orientation_error = get_min_angle_between_vec(psi,goal_orientation) / (get_min_angle_between_vec(initial_pose[2],goal_orientation) + 0.01)/ca.pi
+        goal_orientation_error = get_min_angle_between_vec_squared(psi,goal_orientation) / (get_min_angle_between_vec_squared(initial_pose[2],goal_orientation) + 0.01)
         
         ## VELOCITY ORIENTATION COST
         # derive velocity vector angle
@@ -96,7 +96,7 @@ class FixedMPCObjective:
 
         #vel_orientation = ca.if_else(v_x > 0.01, ca.atan2(v_y,v_x), ca.sign(v_y)*ca.pi/2)
 
-        vel_orientation_error = get_min_angle_between_vec(psi,goal_direction_orientation)/get_min_angle_between_vec(initial_pose[2],goal_direction_orientation) /ca.pi
+        vel_orientation_error = get_min_angle_between_vec_squared(psi,goal_direction_orientation)/(get_min_angle_between_vec_squared(initial_pose[2],goal_direction_orientation) + 0.01)
         
         rotation_car = helpers.rotation_matrix(psi)
         dist2constraint = 0
@@ -110,6 +110,7 @@ class FixedMPCObjective:
                 disc_x = getattr(settings._params, "disc_" + str(disc) + "_offset")[0]
                 disc_relative_pos = ca.vertcat(disc_x, 0)
                 disc_pos = pos + rotation_car @ disc_relative_pos
+                disc_pos_initial = initial_pose[:2] + rotation_car @ disc_relative_pos
 
                 a1 = a1_all[disc]
                 a2 = a2_all[disc]
@@ -123,15 +124,16 @@ class FixedMPCObjective:
                 b = b / norm_a
                 
                 dist2constraint += (a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r)
-           
+                disc2constraint_initial = (a1 * disc_pos_initial[0] + a2 * disc_pos_initial[1] - b + disc_r)
+        
+        dist2constraint = dist2constraint/disc2constraint_initial/self._n_discs/self._n_obst   
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self._N + 1:
                 cost = Wgoal_position * goal_dist_error + \
-                    Wvel_orientation * vel_orientation_error + \
                     Wgoal_orientation * goal_orientation_error + \
                     Wstatic * dist2constraint
             else:
-                cost =   Wstatic*dist2constraint+ Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
+                cost =  Wvel_orientation * vel_orientation_error +  Wstatic*dist2constraint+ Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
         else:
             print("not implemented yet")
 

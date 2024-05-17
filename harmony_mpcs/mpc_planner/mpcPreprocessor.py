@@ -38,10 +38,6 @@ class MPCPreprocessor(object):
         The seed point is the robot_state.
         """
 
-
-        #print(pos_lidar_2d)
-        #print(trans_lidar)
-        #print(robot_state)
         pos_lidar_3d = self.define_position(robot_state, trans_lidar)
         self._fsd.set_position(pos_lidar_3d)
         self._fsd.compute_constraints(point_cloud)
@@ -56,7 +52,6 @@ class MPCPreprocessor(object):
         self._goal_orientation = obs['goal']['orientation']
         self._initial_pose = obs['x']
 
-
         x_ref = obs['x']
         point_cloud = obs['lidar_point_cloud']
         trans_lidar = obs['trans_lidar']
@@ -70,8 +65,8 @@ class MPCPreprocessor(object):
 
         for j in range(self._N):
             if not self._linear_constr_fixed_over_horizon:
-                 x_ref = previous_plan[j,self._nu:self._nu+3]
-
+                x_ref = previous_plan[j,self._nu:self._nu+3]
+            
             self._linear_constraints_j, halfplanes_j, points_j = self.compute_constraints(x_ref, point_cloud, trans_lidar)
 
             self._linear_constraints.append(self._linear_constraints_j)

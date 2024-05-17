@@ -81,16 +81,23 @@ class MPCPlanner(object):
 
         self.setWeights()
 
-    def setX0(self, initialize_type="current_state", initial_step= True):
+    def setX0(self, initialize_type="current_state", initial_step= False):
         if initialize_type == "current_state" or initialize_type == "previous_plan" and initial_step:
             for i in range(self._N):
                 self._x0[i][self._nu:] = self._xinit
                 self._initial_step = False
         elif initialize_type == "previous_plan":
-            self.shiftHorizon(self.output)
+            self.shiftHorizon(self._output)
         else:
             np.zeros(shape=(self._N, self._nx + self._nu + self._ns))
 
+    def shiftHorizon(self, output):
+        for i in range(len(output)):
+            if i == 0:
+                continue
+            self._x0[i - 1, 0 : len(output[i,:])] = output[i,:]
+        self._x0[-1:, 0 : len(output[i,:])] = output[i,:]
+            
     def setWeights(self,update_goal_region=False):
         for N_iter in range(self._N):
             k = N_iter * self._npar

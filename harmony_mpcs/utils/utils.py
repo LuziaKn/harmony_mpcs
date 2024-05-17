@@ -58,3 +58,6 @@ def convert_laserscan_to_pointcloud(laserscan_msg):
 
 
     return points
+
+def min_angle_diff(angle1, angle2):
+    return np.arctan2(np.sin(angle1 - angle2), np.cos(angle1 - angle2))

@@ -82,15 +82,16 @@ class FreeSpaceDecomposition(object):
         self._lidar_2d = lidar_2d
 
     def set_position(self, position: np.ndarray):
-        self._position = position
+        if position.shape[0] == 2:
+            self.position = np.concatenate((position, np.zeros(1)))
+        else:
+            self._position = position
 
     def filter_point_cloud(self, points: np.ndarray):
         if self._lidar_2d:
             points = points[:,:2]
             self._position = self._position[:2]
-            #print('self._position', self._position, flush=True)
-        self._constraints = []
-        self._closest_points = []
+        
         dists = np.linalg.norm(points - self._position, axis=1)
         idx = np.argsort(dists)
         points = points[idx]
@@ -114,7 +115,12 @@ class FreeSpaceDecomposition(object):
         self,
         points: np.ndarray,
     ):
+        dists = np.linalg.norm(points - self._position, axis=1)
+        idx = np.argsort(dists)
+        points = points[idx]
         
+        self._constraints = []
+        self._closest_points = []
         while (
             points.size > 0
             and len(self._constraints) < self._number_constraints
