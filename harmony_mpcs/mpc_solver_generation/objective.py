@@ -126,7 +126,7 @@ class FixedMPCObjective:
                 dist2constraint += (a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r)
                 disc2constraint_initial = (a1 * disc_pos_initial[0] + a2 * disc_pos_initial[1] - b + disc_r)
         
-        dist2constraint = dist2constraint/disc2constraint_initial/self._n_discs/self._n_obst   
+        dist2constraint = dist2constraint/self._n_discs/self._n_obst   
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self._N + 1:
                 cost = Wgoal_position * goal_dist_error + \
