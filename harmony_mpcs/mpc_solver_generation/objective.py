@@ -93,12 +93,10 @@ class FixedMPCObjective:
         
         ## VELOCITY ORIENTATION COST
         # derive velocity vector angle
-        goal_direction = ca.vertcat(goal_position[0] - pos[0], goal_position[1] - pos[1])
-        goal_direction_orientation = ca.if_else(goal_direction[0] > 0.01, ca.atan2(goal_direction[1],goal_direction[0]), ca.sign(goal_direction[1])*ca.pi/2)
+   
+        vel_orientation = ca.if_else(v_x > 0.01, ca.atan2(v_y,v_x), ca.sign(v_y)*ca.pi/2)
 
-        #vel_orientation = ca.if_else(v_x > 0.01, ca.atan2(v_y,v_x), ca.sign(v_y)*ca.pi/2)
-
-        vel_orientation_error = min_angle_diff(psi,goal_direction_orientation)**2/(min_angle_diff(initial_pose[2],goal_direction_orientation)**2 + 0.01)
+        vel_orientation_error = min_angle_diff(psi,vel_orientation)**2/(min_angle_diff(initial_pose[2],vel_orientation)**2 + 0.01)
         
         rotation_car = helpers.rotation_matrix(psi)
         dist2constraint = 0
