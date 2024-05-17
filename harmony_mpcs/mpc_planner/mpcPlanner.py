@@ -40,8 +40,6 @@ class MPCPlanner(object):
                 self._properties = data['properties']
                 self._map_runtime_par = data['map_runtime_par']
                 self._modules = data['modules']
-            except FileNotFoundError:
-                print(f"File {params_file_path} not found.")
             except Exception as e:
                 print(f"An error occurred: {e}")
 
@@ -93,18 +91,25 @@ class MPCPlanner(object):
         else:
             np.zeros(shape=(self._N, self._nx + self._nu + self._ns))
 
-    def setWeights(self):
+    def setWeights(self,update_goal_region=False):
         for N_iter in range(self._N):
             k = N_iter * self._npar
             selected_weights = {key: value for key, value in self._map_runtime_par.items() if key.startswith('W')}
             
             
             for key, _ in selected_weights.items():
-                print('!!!!!!!!!!!!!!!!!!!!', key, flush=True)
+                if self._debug:
+                    print('!!!!!!!!!!!!!!!!!!!!', key, flush=True)
                 try:
                     self._params[k+self._map_runtime_par[key][0]] = self._config['weights'][key]
                 except Exception as e:
-                    print(f"An error occurred: {e}")
+                    print(f"Set the weight {e} in the config file")
+            self._params[k+self._map_runtime_par['Wgoal_orientation'][0]] = 0
+            
+            if update_goal_region:
+                self._params[k+self._map_runtime_par['Wvel_orientation'][0]] = 0
+                self._params[k+self._map_runtime_par['Wgoal_orientation'][0]] = self._config['weights']['Wgoal_orientation']
+                
 
     def setParams(self, params_dict):
         for N_iter in range(self._N):
@@ -169,6 +174,29 @@ class MPCPlanner(object):
         
         self._preprocessor.preprocess(obs, info, self._output)
         params_dict = self._preprocessor.get_params_dict()
+        
+        goal_dist = np.linalg.norm(self._xinit[:2] - self._preprocessor._goal_position[:2])
+        print('goal_dist:',  goal_dist, flush=True)
+        if goal_dist < self._config['goal_threshold']:
+            print('in goal region', flush=True)
+            self.setWeights(update_goal_region=True)
+        else: 
+            self.setWeights()
+            
+        if obs['xdot'][0] <0.1 and obs['xdot'][1] <=0.1:
+            for N_iter in range(self._N):
+                k = N_iter * self._npar
+                self._params[k+self._map_runtime_par['Wvel_orientation'][0]] = 0
+        else:
+            for N_iter in range(self._N):
+                k = N_iter * self._npar
+                self._params[self._map_runtime_par['Wvel_orientation'][0]] = self._config['weights']['Wvel_orientation']
+            
+   
+ 
+            
+            
+        
        
         self.setParams(params_dict)
 

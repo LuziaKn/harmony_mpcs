@@ -46,6 +46,7 @@ class FixedMPCObjective:
         params.add_parameter("Wv")
         params.add_parameter("Wa")
         params.add_parameter("Wstatic")
+        params.add_parameter("Wdynamic")
   
     def get_value(self, x, u, settings, stage_idx):
 
@@ -73,6 +74,29 @@ class FixedMPCObjective:
 
         Wgoal_position = getattr(settings._params, "Wgoal_position")
         Wgoal_orientation = getattr(settings._params, "Wgoal_orientation")
+        Wvel_orientation = getattr(settings._params, "Wvel_orientation")
+        Wv = getattr(settings._params, "Wv")
+        Wa = getattr(settings._params, "Wa")
+        Wstatic = getattr(settings._params, "Wstatic")
+        Wdynamic = getattr(settings._params, "Wdynamic")
+        
+        ## GOAL POSITION REACHING COST
+        # Derive position error
+        goal_dist_error = (pos[0] - goal_position[0]) ** 2 + (pos[1] - goal_position[1]) ** 2
+        initial_goal_dist_error = (initial_pose[0] - goal_position[0]) ** 2 + (initial_pose[1] - goal_position[1]) ** 2 + 0.01
+        goal_dist_error_normalized = goal_dist_error/initial_goal_dist_error    
+
+        ## GOAL ORIENTATION COST 
+        goal_orientation_error = get_min_angle_between_vec(psi,goal_orientation) / (get_min_angle_between_vec(initial_pose[2],goal_orientation) + 0.01)/ca.pi
+        
+        ## VELOCITY ORIENTATION COST
+        # derive velocity vector angle
+        goal_direction = ca.vertcat(goal_position[0] - pos[0], goal_position[1] - pos[1])
+        goal_direction_orientation = ca.if_else(goal_direction[0] > 0.01, ca.atan2(goal_direction[1],goal_direction[0]), ca.sign(goal_direction[1])*ca.pi/2)
+
+        #vel_orientation = ca.if_else(v_x > 0.01, ca.atan2(v_y,v_x), ca.sign(v_y)*ca.pi/2)
+
+        vel_orientation_error = get_min_angle_between_vec(psi,goal_direction_orientation)/get_min_angle_between_vec(initial_pose[2],goal_direction_orientation) /ca.pi
         
         rotation_car = helpers.rotation_matrix(psi)
         dist2constraint = 0
@@ -99,36 +123,15 @@ class FixedMPCObjective:
                 b = b / norm_a
                 
                 dist2constraint += (a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r)
-
-                
-
-        Wvel_orientation = getattr(settings._params, "Wvel_orientation")
-        Wv = getattr(settings._params, "Wv")
-        Wa = getattr(settings._params, "Wa")
-        Wstatic = getattr(settings._params, "Wstatic")
-        
-        
-    
-        # Derive position error
-        goal_dist_error = (pos[0] - goal_position[0]) ** 2 + (pos[1] - goal_position[1]) ** 2
-        initial_goal_dist_error = (initial_pose[0] - goal_position[0]) ** 2 + (initial_pose[1] - goal_position[1]) ** 2 + 0.01
-        goal_dist_error_normalized = goal_dist_error/initial_goal_dist_error    
-
-        # derive velocity vector angle
-        vel_orientation = ca.if_else(speed > 0.1, ca.atan2(v_y,v_x), goal_orientation)
-
-        goal_orientation_error = get_min_angle_between_vec(psi,goal_orientation) / (get_min_angle_between_vec(initial_pose[2],goal_orientation) + 0.01)
-        vel_orientation_error = get_min_angle_between_vec(psi,vel_orientation)/ (get_min_angle_between_vec(initial_pose[2],goal_orientation) + 0.01)
-
-        dist_threshold = 0.5
-
-        switch_orientation = approx_min([initial_goal_dist_error/(dist_threshold ** 2), 1])
            
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self._N + 1:
-                cost = Wgoal_position * goal_dist_error  + Wgoal_orientation * goal_orientation_error + Wstatic * dist2constraint
+                cost = Wgoal_position * goal_dist_error + \
+                    Wvel_orientation * vel_orientation_error + \
+                    Wgoal_orientation * goal_orientation_error + \
+                    Wstatic * dist2constraint
             else:
-                cost =  Wvel_orientation * vel_orientation_error+  Wstatic*dist2constraint+ Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
+                cost =   Wstatic*dist2constraint+ Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
         else:
             print("not implemented yet")
 
