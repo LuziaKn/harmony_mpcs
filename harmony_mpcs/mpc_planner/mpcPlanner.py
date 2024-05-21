@@ -14,8 +14,7 @@ class MPCPlanner(object):
                  solver_function=None,
                  config=None,
                  robot_config=None,
-                 ped_config=None,
-                 mode='python_less_than3.10'):
+                 ped_config=None):
 
         if config is not None and robot_config is not None and ped_config is not None:
             self._config = config
@@ -25,7 +24,7 @@ class MPCPlanner(object):
             raise Exception("Configurations not provided")
 
         
-        self._mode = mode
+        self._mode = self._config['python_version']
         self._solver_function = solver_function
 
         self._dt = self._config['time_step']
@@ -174,7 +173,7 @@ class MPCPlanner(object):
         problem["x0"] = self._x0.flatten()[:]
         problem["all_parameters"] = self._params
 
-        if 'ros1' in self._mode:
+        if self._mode == '<3.10':
             self._output, self._exitflag, info = self._solver.solve(problem)
         elif 'ros2' in self._mode:
             self.output, self._exitflag = self._solver_function(problem)
@@ -184,7 +183,10 @@ class MPCPlanner(object):
             print('exit flag:', self._exitflag)
 
         if self._exitflag == 1 or self._exitflag == 0:
-            action = self._output[1,self._nu + self._nx-3:]
+            if self._config['control_mode'] == 'vel':
+                action = self._output[1,self._nu + self._nx-3:]
+            elif self._config['control_mode'] == 'acc':
+                action = self._output[0,:self._nu-1] #todo account for slack
         else: 
             action = np.array([0,0,0])
             self._output = np.zeros((self._N, self._nx + self._nu))

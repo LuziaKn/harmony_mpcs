@@ -21,16 +21,20 @@ class MPCExample(object):
         
 
         self._solver_directory = current_dir + "/solvers/"
+        self._solver_name = self._config['solver_name']
         self._robot_type = self._config['model_name']
      
         self._planner = MPCPlanner(solverDir = self._solver_directory,
-                                   solverName =self._robot_type + 'FORCESNLPsolver_fixed',
+                                   solverName =self._solver_name,
                                    config = self._config,
                                    robot_config = self._robot_config,
                                    ped_config = self._ped_config,)
         self._planner.reset()
 
         self.output = np.zeros((self._planner._N, self._planner._nu + self._planner._nx))
+
+        self._lidar_pc = 1000 * np.ones((3, 1))
+        self._trans = [0., 0., 0.]
         
         
     def reset(self):

@@ -4,16 +4,13 @@ version = "0.1.0"
 description = ""
 authors = ["luzia <luzia.knoedler@web.de>"]
 readme = "README.md"
-packages = [{include = "harmony_mpcs"}]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-numpy = "1.23.1"
-casadi = "^3.5.5"
-pyyaml = "^6.0.1"
-requests = "^2.31.0"
-urdfenvs = "^0.9.9"
-nav_simulator = {path = "vendor/nav_simulator", develop = true}
+python = "^3.8 <3.10"
+nav_simulator = {path= "vendor/nav_simulator", develop=true}
+casadi = "3.5.5"
+scipy = "1.10.1"
+requests = "^2.32.1"
 
 
 [build-system]

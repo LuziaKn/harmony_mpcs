@@ -19,13 +19,14 @@ mpc:
     - GoalReaching
   weights:
     Wgoal_position: 1
-    Wgoal_orientation: 1
+    Wgoal_orientation: 0
     Wvel_orientation: 0
     Wa: 0.01
     Wv: 0
   n_static_obst: 1
   n_dynamic_obst: 1
-  control_mode: "vel"
+  control_mode: "acc"
+  python_version: '<3.10'
 pedestrians:
   radius: 0.6
 robot:

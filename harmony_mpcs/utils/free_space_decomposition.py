@@ -89,9 +89,7 @@ class FreeSpaceDecomposition(object):
         idx = np.argsort(dists)
         points = points[idx]
         points = points[dists[idx] < self._max_radius]
-        points = points[points[:,2] < self._max_height]
-        points = points[points[:,2] > self._min_height]
-    
+
         while (
             points.size > 0
             and len(self._constraints) < self._number_constraints
