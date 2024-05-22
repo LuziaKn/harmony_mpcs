@@ -123,8 +123,8 @@ class FixedMPCObjective:
                 a2 = a2 / norm_a
                 b = b / norm_a
                 
-                dist2constraint += (a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r)
-                disc2constraint_initial = (a1 * disc_pos_initial[0] + a2 * disc_pos_initial[1] - b + disc_r)
+                dist2constraint += 1/(ca.fmin(a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r,0)**2 + 0.01)
+                disc2constraint_initial = 1/((a1 * disc_pos_initial[0] + a2 * disc_pos_initial[1] - b + disc_r)**2 + 0.01)
         
         dist2constraint = dist2constraint/self._n_discs/self._n_static_obst   
         
@@ -138,22 +138,24 @@ class FixedMPCObjective:
                 disc_relative_pos = ca.vertcat(disc_x, 0)
                 disc_pos = pos + rotation_car @ disc_relative_pos
                 
-                dist2obst = (disc_pos[0] - obst_pos[0]) ** 2 + (disc_pos[1] - obst_pos[1]) ** 2
+                dist2obst = (disc_pos[0] - obst_pos[0]) ** 2 + (disc_pos[1] - obst_pos[1]) ** 2 + 0.01
                 dyn_obst_cost += 1/dist2obst
             
         dyn_obst_cost = dyn_obst_cost/self._n_discs/self._n_dyn_obst
         
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self._N + 1:
-                cost = Wgoal_position * goal_dist_error + \
-                    Wgoal_orientation * goal_orientation_error + \
-                    Wstatic * dist2constraint + \
-                    Wdynamic * dyn_obst_cost
+                cost = Wgoal_position * goal_dist_error_normalized + \
+                    Wgoal_orientation * goal_orientation_error 
+            elif stage_idx == 1:
+                cost =  Wstatic * dist2constraint + \
+                        Wdynamic * dyn_obst_cost + \
+                        Wvel_orientation * vel_orientation_error + \
+                        Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
             else:
                 cost =  Wvel_orientation * vel_orientation_error + \
-                    Wstatic*dist2constraint + \
-                    Wdynamic*dyn_obst_cost + \
                     Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
+            
         else:
             print("not implemented yet")
 
