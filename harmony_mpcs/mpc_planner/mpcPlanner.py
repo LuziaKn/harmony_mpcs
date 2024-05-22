@@ -68,6 +68,7 @@ class MPCPlanner(object):
 
         self._preprocessor = MPCPreprocessor(config, self._N, self._nu, self._nx)
         self._predictor = MPCDynObstPredictor(config)
+        self._manual_noise = self._config['manual_noise']
         
         self._debug = self._config['debug']
 
@@ -87,7 +88,8 @@ class MPCPlanner(object):
                 self._x0[i][self._nu:] = self._xinit
                 self._initial_step = False
         elif initialize_type == "previous_plan":
-            self.shiftHorizon(self._output)
+            #self.shiftHorizon(self._output)
+            self._x0 = self._output
         else:
             np.zeros(shape=(self._N, self._nx + self._nu + self._ns))
 
@@ -157,7 +159,7 @@ class MPCPlanner(object):
             k = N_iter * self._npar
             self._predictor.predict(self._dyn_obst[:,:3], self._dyn_obst[:,3:], self._N)
 
-            manual_noise = 0.3
+            manual_noise = self._manual_noise
             major = np.sqrt(major**2 + (manual_noise * self._dt)**2)
             minor = np.sqrt(minor**2 + (manual_noise * self._dt)**2)
             

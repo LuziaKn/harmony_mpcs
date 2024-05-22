@@ -56,8 +56,10 @@ class FixedMPCObjective:
         psi = x[2]
         v_x = x[3]
         v_y = x[4]
+        w = x[5]
         a_x = u[0]
         a_y = u[1]
+        alpha = u[2]
 
         speed = ca.norm_2(x[3:5])
 
@@ -123,10 +125,10 @@ class FixedMPCObjective:
                 a2 = a2 / norm_a
                 b = b / norm_a
                 
-                dist2constraint += 1/(ca.fmin(a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r,0)**2 + 0.01)
+                dist2constraint += 1/((a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r)**2 + 0.01)
                 disc2constraint_initial = 1/((a1 * disc_pos_initial[0] + a2 * disc_pos_initial[1] - b + disc_r)**2 + 0.01)
         
-        dist2constraint = dist2constraint/self._n_discs/self._n_static_obst   
+        dist2constraint = ca.fmin(dist2constraint/self._n_discs/self._n_static_obst,1)
         
         
         ## DYNAMIC OBSTACLE COST
@@ -154,7 +156,7 @@ class FixedMPCObjective:
                         Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
             else:
                 cost =  Wvel_orientation * vel_orientation_error + \
-                    Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
+                    Wa * a_x * a_x + Wa * a_y * a_y  + Wv * v_x * v_x + Wv* v_y * v_y 
             
         else:
             print("not implemented yet")
