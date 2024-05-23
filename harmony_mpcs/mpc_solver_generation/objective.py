@@ -64,6 +64,8 @@ class FixedMPCObjective:
         slack = u[3]
 
         speed = ca.norm_2(x[3:5])
+        
+        epsilon = 0.01
 
         # get ego speed
         # theta_rad = psi
@@ -90,18 +92,18 @@ class FixedMPCObjective:
         ## GOAL POSITION REACHING COST
         # Derive position error
         goal_dist_error = (pos[0] - goal_position[0]) ** 2 + (pos[1] - goal_position[1]) ** 2
-        initial_goal_dist_error = (initial_pose[0] - goal_position[0]) ** 2 + (initial_pose[1] - goal_position[1]) ** 2 + 0.01
+        initial_goal_dist_error = (initial_pose[0] - goal_position[0]) ** 2 + (initial_pose[1] - goal_position[1]) ** 2 + epsilon
         goal_dist_error_normalized = goal_dist_error/initial_goal_dist_error    
 
         ## GOAL ORIENTATION COST 
-        goal_orientation_error = min_angle_diff(psi,goal_orientation)**2 / (min_angle_diff(initial_pose[2],goal_orientation)**2 + 0.01)
+        goal_orientation_error = min_angle_diff(psi,goal_orientation)**2 / (min_angle_diff(initial_pose[2],goal_orientation)**2 + epsilon)
         
         ## VELOCITY ORIENTATION COST
         # derive velocity vector angle
    
-        vel_orientation = ca.if_else(v_x > 0.01, ca.atan2(v_y,v_x), ca.sign(v_y)*ca.pi/2)
+        #vel_orientation = ca.if_else(v_x > 0.01, ca.atan2(v_y,v_x), ca.sign(v_y)*ca.pi/2)
 
-        vel_orientation_error = min_angle_diff(psi,vel_orientation)**2/(min_angle_diff(initial_pose[2],vel_orientation)**2 + 0.01)
+        #vel_orientation_error = min_angle_diff(psi,vel_orientation)**2/(min_angle_diff(initial_pose[2],vel_orientation)**2 + 0.01)
         
         rotation_car = helpers.rotation_matrix(psi)
         dist2constraint = 0
@@ -124,14 +126,16 @@ class FixedMPCObjective:
                 disc_r = getattr(settings._params, "disc_" + str(disc) + "_r")
                 
                 norm_a = ca.norm_2(ca.vertcat(a1, a2))
-                a1 = a1 / norm_a
-                a2 = a2 / norm_a
-                b = b / norm_a
+                a1 = a1 / (norm_a + epsilon)
+                a2 = a2 / (norm_a + epsilon)
+                b = b / (norm_a + epsilon)
                 
-                dist2constraint += 1/((a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r)**2 + 0.01)
-                disc2constraint_initial = 1/((a1 * disc_pos_initial[0] + a2 * disc_pos_initial[1] - b + disc_r)**2 + 0.01)
-        
-        dist2constraint = ca.fmin(dist2constraint/self._n_discs/self._n_static_obst,1)
+                dist2constraint += 1/((a1 * disc_pos[0] + a2 * disc_pos[1] - b + disc_r)**2 + epsilon)
+                disc2constraint_initial = 1/((a1 * disc_pos_initial[0] + a2 * disc_pos_initial[1] - b + disc_r)**2 + epsilon)
+        if self._n_static_obst > 0:
+            dist2constraint = ca.fmin(dist2constraint/self._n_discs/self._n_static_obst,1)
+        else:
+            dist2constraint = 0
         
         
         ## DYNAMIC OBSTACLE COST
@@ -143,10 +147,13 @@ class FixedMPCObjective:
                 disc_relative_pos = ca.vertcat(disc_x, 0)
                 disc_pos = pos + rotation_car @ disc_relative_pos
                 
-                dist2obst = (disc_pos[0] - obst_pos[0]) ** 2 + (disc_pos[1] - obst_pos[1]) ** 2 + 0.01
+                dist2obst = (disc_pos[0] - obst_pos[0]) ** 2 + (disc_pos[1] - obst_pos[1]) ** 2 + epsilon
                 dyn_obst_cost += 1/dist2obst
             
-        dyn_obst_cost = dyn_obst_cost/self._n_discs/self._n_dyn_obst
+        if self._n_dyn_obst > 0:
+            dyn_obst_cost = dyn_obst_cost/self._n_discs/self._n_dyn_obst
+        else:
+            dyn_obst_cost = 0
         
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self._N + 1:
@@ -155,12 +162,10 @@ class FixedMPCObjective:
             elif stage_idx == 1:
                 cost =  Wstatic * dist2constraint + \
                         Wdynamic * dyn_obst_cost + \
-                        Wvel_orientation * vel_orientation_error + \
                         Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y +\
                         Wslack * slack * slack
             else:
-                cost =  Wvel_orientation * vel_orientation_error + \
-                    Wa * a_x * a_x + Wa * a_y * a_y  + Wv * v_x * v_x + Wv* v_y * v_y + \
+                cost = Wa * a_x * a_x + Wa * a_y * a_y  + Wv * v_x * v_x + Wv* v_y * v_y + \
                     Wslack * slack * slack
             
         else:

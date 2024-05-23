@@ -177,8 +177,8 @@ class FixedEllipsoidConstraints:
                 disc_to_obstacle = disc_pos - obst_pos
                 c_disc_obstacle = ca.mtimes(disc_to_obstacle.T,ca.mtimes(obstacle_ellipse_matrix,disc_to_obstacle))
 
-                A = (obst_pos - disc_pos) / ca.norm_2(disc_pos - obst_pos)
-                b = A.T @ (obst_pos - A*(obst_r + disc_r))
+                # A = (obst_pos - disc_pos) / ca.norm_2(disc_pos - obst_pos)
+                # b = A.T @ (obst_pos - A*(obst_r + disc_r))
                 constraints.append(c_disc_obstacle + slack)
                 print('constraint added agent' + str(i+1))
 
