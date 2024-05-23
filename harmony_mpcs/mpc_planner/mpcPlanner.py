@@ -3,6 +3,7 @@ import os
 import pickle
 
 from harmony_mpcs.utils.utils import output2array
+from harmony_mpcs.utils.social_forces_model import social_forces, forward_sim_sfm
 from harmony_mpcs.mpc_planner.mpcPreprocessor import MPCPreprocessor
 from harmony_mpcs.mpc_planner.mpcDynObstPredictor import MPCDynObstPredictor
 
@@ -83,15 +84,20 @@ class MPCPlanner(object):
         self.setWeights()
 
     def setX0(self, initialize_type="current_state", initial_step= False):
-        if initialize_type == "current_state" or initialize_type == "previous_plan" and initial_step:
+        if initialize_type == "current_state" or initialize_type == "previous_plan" and initial_step or initialize_type == "sfm" and initial_step:
             for i in range(self._N):
                 self._x0[i][self._nu:] = self._xinit
                 self._initial_step = False
         elif initialize_type == "previous_plan":
             #self.shiftHorizon(self._output)
             self._x0 = self._output
-        else:
-            np.zeros(shape=(self._N, self._nx + self._nu + self._ns))
+        elif initialize_type == "sfm":
+            sfm_predictions = forward_sim_sfm(self._xinit, self._goal_position[:2], self._dyn_obst, self._N, self._dt)
+            self._x0 = np.zeros(shape=(self._N, self._nx + self._nu))
+            self._x0[:,self._nu:self._nu+2] = sfm_predictions[:, 0, :2]
+            self._x0[:,self._nu+3:self._nu+5] = sfm_predictions[:, 0, 2:]
+   
+            
 
     def shiftHorizon(self, output):
         for i in range(len(output)):
@@ -107,8 +113,6 @@ class MPCPlanner(object):
             
             
             for key, _ in selected_weights.items():
-                if self._debug:
-                    print('!!!!!!!!!!!!!!!!!!!!', key, flush=True)
                 try:
                     self._params[k+self._map_runtime_par[key][0]] = self._config['weights'][key]
                 except Exception as e:
@@ -178,6 +182,7 @@ class MPCPlanner(object):
 
         self._xinit = np.concatenate([obs['x'], obs['xdot']])
         self._dyn_obst = obs['dyn_obst']
+        self._goal_position = obs['goal']['position']
         
         self.setX0(initialize_type=self._config['initialization'], initial_step=self._initial_step)
         
@@ -259,7 +264,7 @@ class MPCPlanner(object):
         self._action, output = self.solve(obs, info)
         #print('output:', output, flush=True)
 
-        return self._action, output, self._exitflag, self._preprocessor._linear_constraints , self._preprocessor._closest_points, self._preprocessor._lidar_pc#, exitflag, self.vel_limit
+        return self._action, output, self._exitflag, self._preprocessor._linear_constraints , self._preprocessor._closest_points, self._preprocessor._lidar_pc, self._x0#, exitflag, self.vel_limit
     
     def print_parameters(self):
         for N_iter in range(self._N):

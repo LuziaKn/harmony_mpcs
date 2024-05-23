@@ -163,6 +163,8 @@ class SolverGenerator(object):
         if self.solver_settings._floating:
             options.license.use_floating_license = 1
             options.embedded_timing = 1
+            
+        print('floating', options.license.use_floating_license)
         #options.init = 1 # Warm start?
 
         # Todo: Make solver options a lambda defined in the settings
