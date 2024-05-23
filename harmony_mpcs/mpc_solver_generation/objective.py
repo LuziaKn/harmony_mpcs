@@ -49,6 +49,7 @@ class FixedMPCObjective:
         params.add_parameter("Wa")
         params.add_parameter("Wstatic")
         params.add_parameter("Wdynamic")
+        params.add_parameter("Wslack")
   
     def get_value(self, x, u, settings, stage_idx):
 
@@ -60,6 +61,7 @@ class FixedMPCObjective:
         a_x = u[0]
         a_y = u[1]
         alpha = u[2]
+        slack = u[3]
 
         speed = ca.norm_2(x[3:5])
 
@@ -83,6 +85,7 @@ class FixedMPCObjective:
         Wa = getattr(settings._params, "Wa")
         Wstatic = getattr(settings._params, "Wstatic")
         Wdynamic = getattr(settings._params, "Wdynamic")
+        Wslack = getattr(settings._params, "Wslack")
         
         ## GOAL POSITION REACHING COST
         # Derive position error
@@ -153,10 +156,12 @@ class FixedMPCObjective:
                 cost =  Wstatic * dist2constraint + \
                         Wdynamic * dyn_obst_cost + \
                         Wvel_orientation * vel_orientation_error + \
-                        Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y 
+                        Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y +\
+                        Wslack * slack * slack
             else:
                 cost =  Wvel_orientation * vel_orientation_error + \
-                    Wa * a_x * a_x + Wa * a_y * a_y  + Wv * v_x * v_x + Wv* v_y * v_y 
+                    Wa * a_x * a_x + Wa * a_y * a_y  + Wv * v_x * v_x + Wv* v_y * v_y + \
+                    Wslack * slack * slack
             
         else:
             print("not implemented yet")

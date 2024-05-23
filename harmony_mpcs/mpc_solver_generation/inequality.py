@@ -101,6 +101,7 @@ class LinearConstraints:
 
 
 class FixedEllipsoidConstraints:
+    
 
     def __init__(self, params, n_discs, max_obstacles):
 
@@ -141,6 +142,7 @@ class FixedEllipsoidConstraints:
         # Retrieve variables
         x = z[model.nu:model.nu + model.nx]
         u = z[0:model.nu]
+        slack = u[-1]
 
         # States
         pos = x[0:2]
@@ -177,7 +179,7 @@ class FixedEllipsoidConstraints:
 
                 A = (obst_pos - disc_pos) / ca.norm_2(disc_pos - obst_pos)
                 b = A.T @ (obst_pos - A*(obst_r + disc_r))
-                constraints.append(c_disc_obstacle)
+                constraints.append(c_disc_obstacle + slack)
                 print('constraint added agent' + str(i+1))
 
 
