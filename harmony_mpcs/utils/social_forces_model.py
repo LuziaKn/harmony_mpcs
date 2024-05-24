@@ -72,7 +72,7 @@ def social_forces(positions, velocities, goals):
                 d = np.linalg.norm(rij)
                 rij_direction = rij /( d + epsilon)
 
-                vij = ego_vel - other_pos
+                vij = ego_vel - other_vel
                 vd = np.linalg.norm(vij)
                 vij_direction = vij /( vd + epsilon)
 
