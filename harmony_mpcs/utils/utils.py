@@ -39,3 +39,18 @@ def compute_point_cloud(robot_state: np.ndarray, lidar_obs: np.ndarray, relative
     z_threshold = 0.0
     absolute_positions_filtered = absolute_positions[absolute_positions[:,2]>=z_threshold]
     return absolute_positions_filtered
+
+def get_agent_states(joint_state, id, nx = 6):
+    """
+    Extracts the state of the agent with id from the joint state.
+    """
+    start = id * nx
+    end = (id + 1) * nx
+    return joint_state[start:end]
+
+def perpendicular(a):
+    # returns the vector perpendicular to a (left)
+    b = np.zeros_like(a)
+    b[0] = -a[1]
+    b[1] = a[0]
+    return b

@@ -1,4 +1,6 @@
 **/__pycache__/
 **/solvers/
 *.forces
+*.pyc
+**/vendor/
 

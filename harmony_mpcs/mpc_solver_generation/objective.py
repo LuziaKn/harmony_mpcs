@@ -99,8 +99,6 @@ class FixedMPCObjective:
         return cost
 
 
-
-
 def objective(z, param, model, settings, stage_idx):
     # print("stage idx in jackal_objective: {}".format(stage_idx))
     cost = 0.

@@ -6,6 +6,8 @@ from typing import List
 import forcespro.nlp
 import casadi as ca
 
+from harmony_mpcs.mpc_solver_generation.sfm import SocialForcesPolicy
+
 
 
 
@@ -160,6 +162,78 @@ class PointMass_2order_Model(DynamicModel):
                          a_x,
                          a_y,
                          alpha)
+
+class CombinedDynamics(DynamicModel):
+
+    def __init__(self, models: List, params):
+
+        self.nu = models[0].nu# number of control variables
+        self.nx = sum([model.nx for model in models]) # number of states
+
+        self.states = []
+        self.inputs = []
+        self.possible_inputs_to_vehicle = []
+
+        for i, model in enumerate(models):
+
+            for j, state in enumerate(model.states):
+                self.states.append(state + str(i))
+                models[i].states[j] = state + str(i)
+            if i == 0:
+                for j, input in enumerate(model.inputs):
+                    self.inputs.append(input + str(i))
+                    models[i].inputs[j] = input + str(i)
+                for possible_input_to_vehicle in model.possible_inputs_to_vehicle:
+                    self.possible_inputs_to_vehicle.append(possible_input_to_vehicle + str(i))
+
+        self.states_from_sensor = [state_from_sensor for state_from_sensor in model.states_from_sensor for model in
+                                   models]
+        self.states_from_sensor = [state_from_sensor_at_infeasible for state_from_sensor_at_infeasible in
+                                   model.states_from_sensor_at_infeasible for model in
+                                   models]
+        self.inputs_to_vehicle = [input_to_vehicle for input_to_vehicle in model.inputs_to_vehicle for model in
+                                  [models[0]]]
+
+        self.nvar = self.nu + self.nx
+        self.models = models
+
+        radii = []
+        for i in range(len(models)):
+            radii.append(1) #radii.append(getattr(params, "disc_" + str(i) + "_r"))
+
+        self.sfm_policies = []
+        for i in range(1, len(models)):
+            sfm_params = [ 1, 1, 1, 1, 1, 1]#sfm_params = getattr(params, "pedestrians_sfm_param" + str(i))
+            self.sfm_policies.append(SocialForcesPolicy(sfm_params=sfm_params, radii=radii, id=1))
+
+
+    def continuous_model(self, x, u, param, settings):
+
+        settings.params.load_params(param)
+
+        pos = x[0:2]
+        psi = x[2]
+        v_x = x[3]
+        v_y = x[4]
+        w = x[5]
+
+        a_x = u[0]
+        a_y = u[1]
+        alpha = u[2]
+        slack = u[3]
+
+        xdot_joint = ca.vertcat(
+                v_x,
+                      v_y,
+                      w,
+                      a_x,
+                      a_y,
+                      alpha)
+
+        for id in range(1, len(self.models)):
+
+            pedestrian_sfm_params = getattr(settings.params, "pedestrians_sfm_param" + str(id))
+
 
 
 

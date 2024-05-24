@@ -113,24 +113,24 @@ env:
         x: -20
         y: -20
         psi: -6.3
-        v_x: -1.2
-        v_y: -1.2
+        v_x: -1.5
+        v_y: -1.5
         w: -1
       upper_bounds:
         x: 20
         y: 20
         psi: 6.3
-        v_x: 1.2
-        v_y: 1.2
+        v_x: 1.5
+        v_y: 1.5
         w: 1
     input_constraints:
       lower_bounds:
-        a_x: -0.5
-        a_y: -0.5
+        a_x: -3
+        a_y: -3
         alpha: -1
         slack: 0
       upper_bounds:
-        a_x: 0.5
-        a_y: 0.5
+        a_x: 3
+        a_y: 3
         alpha: 1
         slack: 0.2

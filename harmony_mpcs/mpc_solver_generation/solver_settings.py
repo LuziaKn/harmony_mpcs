@@ -45,13 +45,14 @@ class SolverSettings(object):
 
         self._weights = helpers.WeightStructure(self._params, weight_list)
 
-        self.set_ineq_constraints(self._n_discs, self._n_static_obst)
-        self.set_ineq_constr_dynamic(self._n_discs, self._n_dynamic_obst)
-        self.set_obj()
-
         print(self._params)
         self._npar = self._params.n_par()
         self._nh = self._modules.number_of_constraints()
+
+    def set_constr_obj(self):
+        self.set_ineq_constraints(self._n_discs, self._n_static_obst)
+        self.set_ineq_constr_dynamic(self._n_discs, self._n_dynamic_obst)
+        self.set_obj()
 
     def set_ineq_constr_dynamic(self, n_discs, n_obst):
         self._modules.add_module(control_modules.EllipsoidalConstraintModule(self._params, n_discs=n_discs, n_obst=n_obst))
