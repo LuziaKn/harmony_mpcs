@@ -10,7 +10,7 @@ class MPCExample(object):
         current_dir = os.path.dirname(os.path.realpath(__file__))
         config_dir = os.path.join(current_dir, 'config/')
 
-        
+
         # load config
         with open(config_dir + config_file_name) as f:
             config = yaml.safe_load(f)
@@ -18,6 +18,7 @@ class MPCExample(object):
         self._config = config['mpc']
         self._robot_config = config['robot']
         self._ped_config = config['pedestrians']
+        self._env_config = config['env']
         
 
         self._solver_directory = current_dir + "/solvers/"

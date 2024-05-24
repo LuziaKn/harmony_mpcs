@@ -55,6 +55,7 @@ class FixedMPCObjective:
 
         speed = ca.norm_2(x[3:5])
 
+        epsilon = 0.01
         # get ego speed
         # theta_rad = psi
         # R = np.array([[np.cos(theta_rad), np.sin(theta_rad)],
@@ -77,24 +78,21 @@ class FixedMPCObjective:
     
         # Derive position error
         goal_dist_error = (pos[0] - goal_position[0]) ** 2 + (pos[1] - goal_position[1]) ** 2
-        initial_goal_dist_error = (initial_pose[0] - goal_position[0]) ** 2 + (initial_pose[1] - goal_position[1]) ** 2
+        initial_goal_dist_error = (initial_pose[0] - goal_position[0]) ** 2 + (initial_pose[1] - goal_position[1]) ** 2 + epsilon
         goal_dist_error_normalized = goal_dist_error/initial_goal_dist_error    
 
-        # derive velocity vector angle
-        vel_orientation = ca.if_else(speed > 0.1, ca.atan2(v_y,v_x), goal_orientation)
 
-        goal_orientation_error = get_min_angle_between_vec(psi,goal_orientation) / (get_min_angle_between_vec(initial_pose[2],goal_orientation) + 0.01)
-        vel_orientation_error = get_min_angle_between_vec(psi,vel_orientation)/ (get_min_angle_between_vec(initial_pose[2],goal_orientation) + 0.01)
+
+        goal_orientation_error = get_min_angle_between_vec(psi,goal_orientation) / (get_min_angle_between_vec(initial_pose[2],goal_orientation) + epsilon)
 
         dist_threshold = 0.5
 
-        switch_orientation = approx_min([initial_goal_dist_error/(dist_threshold ** 2), 1])
            
         if u.shape[0] >= 2:  # Todo check meaning
             if stage_idx == self._N + 1:
-                cost = Wgoal_position * goal_dist_error  + Wgoal_orientation * goal_orientation_error
+                cost = Wgoal_position * goal_dist_error
             else:
-                cost =  +  Wvel_orientation * vel_orientation_error+  Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y
+                cost = Wa * a_x * a_x + Wa * a_y * a_y + Wv * v_x * v_x + Wv* v_y * v_y
         else:
             print("not implemented yet")
 

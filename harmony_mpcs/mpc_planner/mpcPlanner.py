@@ -200,4 +200,4 @@ class MPCPlanner(object):
         info = {'robot_radius': self._robot_radius}
         self._action, output = self.solve(obs, info)
 
-        return self._action, output, self._preprocessor._linear_constraints , self._preprocessor._closest_points#, exitflag, self.vel_limit
+        return self._action, output, self._exitflag, self._preprocessor._linear_constraints , self._preprocessor._closest_points#, self.vel_limit

@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from mpc_example import MPCExample
 
@@ -11,12 +12,12 @@ class PointRobotExample(MPCExample):
 
 
     def run(self):
-        env = Nav2DEnv()
+        env = Nav2DEnv(self._env_config, self._config)
 
         # Sample usage
         obs = env.reset()
         self._planner._output[:, self._planner._nu:self._planner._nu+2] = obs['pos_global_frame']
-        env.render()
+
 
         done = False
         while not done:
@@ -37,11 +38,21 @@ class PointRobotExample(MPCExample):
                    "trans_lidar": self._trans,
                    "dyn_obst": dyn_obst, }
 
-            action, self.output, _, _ = self._planner.computeAction(obs_dict)
+            action, self.output, self.exitflag, _, _ = self._planner.computeAction(obs_dict)
+            if self.exitflag <1:
+                print('exit flag:', self.exitflag)
+                action = np.array([0,0,0])
             obs, reward, done, _ = env.step(action)
 
-            env._plot_infos_dict['output'] = self.output
+
+
+
+            env._plot_infos_dict['output'] = self.output[:, self._planner._nu:self._planner._nu+2]
+            env._plot_infos_dict['predictions'] = self._planner._predictor.predictions
+            start_time = time.time()
             env.render()
+            end_time = time.time()
+            print(end_time - start_time)
             print(f"Action: {action}, Reward: {reward}, Done: {done}")
 
         env.close()
