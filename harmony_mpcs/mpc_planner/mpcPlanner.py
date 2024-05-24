@@ -59,6 +59,7 @@ class MPCPlanner(object):
         
         
         self._nx = self._properties['nx']
+        self._nx_per_agent = self._properties['nx_per_agent']
         self._nu = self._properties['nu']
         self._npar = self._properties['npar']
         self._N = self._properties['N']
@@ -71,7 +72,7 @@ class MPCPlanner(object):
         self._output = np.zeros((self._N, self._nx + self._nu))
         print(self._map_runtime_par)
 
-        self._preprocessor = MPCPreprocessor(config, self._N, self._nu, self._nx)
+        self._preprocessor = MPCPreprocessor(config, self._N, self._nu, self._nx, self._nx_per_agent)
         self._predictor = MPCDynObstPredictor(config)
 
 
@@ -122,7 +123,10 @@ class MPCPlanner(object):
 
         pos_dynamic_obst = self._dyn_obst[:,:3]
         vel_dynamic_obst = self._dyn_obst[:,3:]
-        self.setEllipsoidConstraints(pos_dynamic_obst=pos_dynamic_obst, vel_dynamic_obst=vel_dynamic_obst) 
+        self.setEllipsoidConstraints(pos_dynamic_obst=pos_dynamic_obst, vel_dynamic_obst=vel_dynamic_obst)
+
+        if self._config['interactive']:
+            self.set_sfm_params()
 
     def setLinearConstraints(self, lin_constr, r_body):
         for N_iter in range(self._N):
@@ -148,17 +152,37 @@ class MPCPlanner(object):
             for obst_id in range(self._n_dynamic_obst):
                 pos =  self._predictor.predictions[obst_id][N_iter]
 
+            if not self._config['interactive']:
                 self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][0]]] = pos[0]
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][1]]] = pos[1]
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_r" ][0]]] = self._ped_config['radius']
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_psi" ][0]]] = 0
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_major" ][0]]] = major
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_minor" ][0]]] = major
-                self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_chi" ][0]]] = 1
+                self._params[[k + self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_pos"][1]]] = pos[1]
+            self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_r" ][0]]] = self._ped_config['radius']
+            self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_psi" ][0]]] = 0
+            self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_major" ][0]]] = major
+            self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_minor" ][0]]] = major
+            self._params[[k+self._map_runtime_par["ellipsoid_constraint_agent_" + str(obst_id) + "_chi" ][0]]] = 1
+
+    def set_sfm_params(self):
+        for N_iter in range(self._N):
+            k = N_iter * self._npar
+            for i in range(self._n_dynamic_obst):
+                goal = self._dyn_obst[i, :2] + 2* self._N * self._dyn_obst[i, 3:5] * self._dt
+                sfm_params = [goal[0], goal[1],
+                              self._ped_config['sfm']['desired_speed'],
+                              self._ped_config['sfm']['w_goal'],
+                              self._ped_config['sfm']['w_social'],
+                              self._ped_config['sfm']['w_obstacle']]
+                self._params[k+self._map_runtime_par['pedestrians_sfm_param'+str(i)][0]] = sfm_params[0]
+                self._params[k+self._map_runtime_par['pedestrians_sfm_param'+str(i)][1]] = sfm_params[1]
+                self._params[k+self._map_runtime_par['pedestrians_sfm_param'+str(i)][2]] = sfm_params[2]
+                self._params[k+self._map_runtime_par['pedestrians_sfm_param'+str(i)][3]] = sfm_params[3]
+                self._params[k+self._map_runtime_par['pedestrians_sfm_param'+str(i)][4]] = sfm_params[4]
+                self._params[k+self._map_runtime_par['pedestrians_sfm_param'+str(i)][5]] = sfm_params[5]
 
     def solve(self, obs, info):
 
-        self._xinit = np.concatenate([obs['x'], obs['xdot']])
+
+        self._xinit = np.concatenate([obs['x'], obs['xdot']],axis=1).flatten()
+
         self._dyn_obst = obs['dyn_obst']
         
         self.setX0(initialize_type=self._config['initialization'], initial_step=self._initial_step)
@@ -172,6 +196,8 @@ class MPCPlanner(object):
         problem["xinit"] = self._xinit
         problem["x0"] = self._x0.flatten()[:]
         problem["all_parameters"] = self._params
+
+        #self.print_params()
 
         if self._mode == '<3.10':
             self._output, self._exitflag, info = self._solver.solve(problem)
@@ -201,3 +227,11 @@ class MPCPlanner(object):
         self._action, output = self.solve(obs, info)
 
         return self._action, output, self._exitflag, self._preprocessor._linear_constraints , self._preprocessor._closest_points#, self.vel_limit
+
+    def print_params(self):
+        for N_iter in range(self._N):
+            k = N_iter * self._npar
+
+            for key, value in self._map_runtime_par.items():
+                for i in range(len(value)):
+                    print(key, self._params[k + value[i]])

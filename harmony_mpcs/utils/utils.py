@@ -1,4 +1,5 @@
 import numpy as np
+import casadi as ca
 
 def output2array(output):
     i = 0
@@ -48,9 +49,9 @@ def get_agent_states(joint_state, id, nx = 6):
     end = (id + 1) * nx
     return joint_state[start:end]
 
-def perpendicular(a):
+def perpendicular_casadi(a):
     # returns the vector perpendicular to a (left)
-    b = np.zeros_like(a)
+    b = ca.SX(a.shape[0],1)
     b[0] = -a[1]
     b[1] = a[0]
     return b

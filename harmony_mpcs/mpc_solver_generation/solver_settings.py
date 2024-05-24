@@ -2,6 +2,7 @@
 import yaml
 import harmony_mpcs.mpc_solver_generation.helpers as helpers
 import harmony_mpcs.mpc_solver_generation.control_modules as control_modules
+import harmony_mpcs.mpc_solver_generation.dynamics as dynamics
 
 class SolverSettings(object):
 
@@ -19,6 +20,7 @@ class SolverSettings(object):
 
         self._model_name = config['mpc']['model_name']
         self._robot_config = config['robot']
+        self._pedestrian_config = config['pedestrians']
 
         self._solver_name = config['mpc']['solver_name']
 
@@ -45,14 +47,19 @@ class SolverSettings(object):
 
         self._weights = helpers.WeightStructure(self._params, weight_list)
 
-        print(self._params)
-        self._npar = self._params.n_par()
-        self._nh = self._modules.number_of_constraints()
+        self._model = dynamics.PointMass_2order_Model(robot_config=self._robot_config)
+        self._nx_per_agent = self._model.nx
+
+
 
     def set_constr_obj(self):
         self.set_ineq_constraints(self._n_discs, self._n_static_obst)
         self.set_ineq_constr_dynamic(self._n_discs, self._n_dynamic_obst)
         self.set_obj()
+
+        print(self._params)
+        self._npar = self._params.n_par()
+        self._nh = self._modules.number_of_constraints()
 
     def set_ineq_constr_dynamic(self, n_discs, n_obst):
         self._modules.add_module(control_modules.EllipsoidalConstraintModule(self._params, n_discs=n_discs, n_obst=n_obst))

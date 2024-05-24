@@ -7,6 +7,7 @@ import forcespro.nlp
 import casadi as ca
 
 from harmony_mpcs.mpc_solver_generation.sfm import SocialForcesPolicy
+from harmony_mpcs.utils.utils import get_agent_states
 
 
 
@@ -165,7 +166,9 @@ class PointMass_2order_Model(DynamicModel):
 
 class CombinedDynamics(DynamicModel):
 
-    def __init__(self, models: List, params):
+    def __init__(self, models: List, params, robot_config):
+
+        self.robot_config = robot_config
 
         self.nu = models[0].nu# number of control variables
         self.nx = sum([model.nx for model in models]) # number of states
@@ -174,25 +177,10 @@ class CombinedDynamics(DynamicModel):
         self.inputs = []
         self.possible_inputs_to_vehicle = []
 
-        for i, model in enumerate(models):
 
-            for j, state in enumerate(model.states):
-                self.states.append(state + str(i))
-                models[i].states[j] = state + str(i)
-            if i == 0:
-                for j, input in enumerate(model.inputs):
-                    self.inputs.append(input + str(i))
-                    models[i].inputs[j] = input + str(i)
-                for possible_input_to_vehicle in model.possible_inputs_to_vehicle:
-                    self.possible_inputs_to_vehicle.append(possible_input_to_vehicle + str(i))
-
-        self.states_from_sensor = [state_from_sensor for state_from_sensor in model.states_from_sensor for model in
-                                   models]
-        self.states_from_sensor = [state_from_sensor_at_infeasible for state_from_sensor_at_infeasible in
-                                   model.states_from_sensor_at_infeasible for model in
-                                   models]
-        self.inputs_to_vehicle = [input_to_vehicle for input_to_vehicle in model.inputs_to_vehicle for model in
-                                  [models[0]]]
+        self.states_from_sensor = [model.states_from_sensor for model in models]
+        self.states_from_sensor = [model.states_from_sensor_at_infeasible for model in models]
+        self.inputs_to_vehicle = [model.inputs_to_vehicle for model in [models[0]]]
 
         self.nvar = self.nu + self.nx
         self.models = models
@@ -209,7 +197,8 @@ class CombinedDynamics(DynamicModel):
 
     def continuous_model(self, x, u, param, settings):
 
-        settings.params.load_params(param)
+        settings._params.load_params(param)
+
 
         pos = x[0:2]
         psi = x[2]
@@ -231,8 +220,46 @@ class CombinedDynamics(DynamicModel):
                       alpha)
 
         for id in range(1, len(self.models)):
+            i = id -1
+            vel = get_agent_states(x,id)[3:5]
+            w = get_agent_states(x,id)[5]
 
-            pedestrian_sfm_params = getattr(settings.params, "pedestrians_sfm_param" + str(id))
+
+            sfm_policy = self.sfm_policies[i]
+
+            sfm_policy.update_params(getattr(settings._params, "pedestrians_sfm_param" + str(i)))
+            sfm_action = sfm_policy.step(joint_state=x)
+
+            xdot = ca.vertcat(vel[0], vel[1], w, sfm_action[0], sfm_action[1], 0)
+
+            xdot_joint = ca.vertcat(xdot_joint, xdot)
+        return xdot_joint
+    def upper_bound(self):
+        result = np.array([])
+
+        for model in [self.models[0]]:
+            for input in model.inputs:
+                result = np.append(result, model.robot_config['input_constraints']['upper_bounds'][input])
+
+        for model in self.models:
+            for state in model.states:
+                result = np.append(result, model.robot_config['state_constraints']['upper_bounds'][state])
+
+        return result
+
+    # Appends lower bounds from system
+    def lower_bound(self):
+        result = np.array([])
+
+        for model in [self.models[0]]:
+            for input in model.inputs:
+                result = np.append(result, model.robot_config['input_constraints']['lower_bounds'][input])
+
+        for model in self.models:
+            for state in model.states:
+                result = np.append(result, model.robot_config['state_constraints']['lower_bounds'][state])
+
+        return result
 
 
 

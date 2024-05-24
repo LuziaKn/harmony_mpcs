@@ -1,6 +1,7 @@
 import casadi as ca
 import numpy as np
 import harmony_mpcs.mpc_solver_generation.helpers as helpers
+from harmony_mpcs.utils.utils import get_agent_states
 
 
 """ 
@@ -180,6 +181,86 @@ class FixedEllipsoidConstraints:
                 b = A.T @ (obst_pos - A*(obst_r + disc_r))
                 constraints.append(c_disc_obstacle)
                 print('constraint added agent' + str(i+1))
+
+
+class InteractiveEllipsoidConstraints:
+
+    def __init__(self, params, n_discs, max_obstacles):
+
+        self.max_obstacles = max_obstacles
+        self.n_discs = n_discs
+        self.name = "interactive_ellipsoid_obst"
+
+        print(self.name)
+
+        self.nh = self.max_obstacles * n_discs
+
+        for obst_id in range(max_obstacles):
+            params.add_parameter(self.constraint_name(obst_id) + "_r", 1)
+            params.add_parameter(self.constraint_name(obst_id) + "_psi", 1)
+            params.add_parameter(self.constraint_name(obst_id) + "_major", 1)
+            params.add_parameter(self.constraint_name(obst_id) + "_minor", 1)
+            params.add_parameter(self.constraint_name(obst_id) + "_chi", 1)
+
+    def constraint_name(self, obst_id):
+        return "ellipsoid_constraint_agent_" + str(obst_id)
+
+    def append_lower_bound(self, lower_bound):
+        for scenario in range(0, self.max_obstacles):
+            for disc in range(0, self.n_discs):
+                lower_bound.append(1.0)
+
+    def append_upper_bound(self, upper_bound):
+        for scenario in range(0, self.max_obstacles):
+            for disc in range(0, self.n_discs):
+                upper_bound.append(np.Inf)
+
+    def append_constraints(self, constraints, z, param, settings, model):
+        settings._params.load_params(param)
+
+        # Retrieve variables
+        x = z[model.nu:model.nu + model.nx]
+
+
+        # States
+        pos = x[0:2]
+        psi = x[2]
+
+        rotation_car = helpers.rotation_matrix(psi)
+
+        for i in range(self.max_obstacles):
+            obst_r = getattr(settings._params, self.constraint_name(i) + "_r")[0]
+            obst_psi = getattr(settings._params, self.constraint_name(i) + "_psi")[0]
+            obst_major = getattr(settings._params, self.constraint_name(i) + "_major")[0]
+            obst_minor = getattr(settings._params, self.constraint_name(i) + "_minor")[0]
+            chi = getattr(settings._params, self.constraint_name(i) + "_chi")[0]
+
+            id = i + 1
+            obst_pos = get_agent_states(x, id)[:2]
+
+            for disc in range(self.n_discs):
+                disc_r = getattr(settings._params, "disc_" + str(disc) + "_r")
+                disc_offset = getattr(settings._params, "disc_" + str(disc) + "_offset")
+
+                # Compute ellipse matrix
+                obst_major *= ca.sqrt(chi)
+                obst_minor *= ca.sqrt(chi)
+                ab = ca.vertcat(ca.horzcat(1. / ((obst_major + (disc_r + obst_r)) ** 2), 0),
+                                ca.horzcat(0, 1. / ((obst_minor + (disc_r + obst_r)) ** 2)))
+
+                obstacle_rotation = helpers.rotation_matrix(obst_psi)
+                obstacle_ellipse_matrix = ca.mtimes(ca.mtimes(obstacle_rotation.T, ab), obstacle_rotation)
+
+                disc_relative_pos = ca.vertcat(disc_offset, 0)
+                disc_pos = pos + ca.mtimes(rotation_car, disc_relative_pos)
+
+                disc_to_obstacle = disc_pos - obst_pos
+                c_disc_obstacle = ca.mtimes(disc_to_obstacle.T, ca.mtimes(obstacle_ellipse_matrix, disc_to_obstacle))
+
+                A = (obst_pos - disc_pos) / ca.norm_2(disc_pos - obst_pos)
+                b = A.T @ (obst_pos - A * (obst_r + disc_r))
+                constraints.append(c_disc_obstacle)
+                print('constraint added agent' + str(i + 1))
 
 
 class FixedLinearConstraints:

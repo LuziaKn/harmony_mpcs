@@ -9,7 +9,8 @@ mpc:
   time_step: 0.1
   slack: False
   interval: 1
-  initialization: current_state
+  initialization: 'current_state'
+  interactive: True
   constraints:
     - SelfCollisionAvoidanceConstraints
     - JointLimitConstraints
@@ -31,8 +32,35 @@ pedestrians:
   radius: 0.4
   sfm:
     desired_speed: 1.4
-    w_social : 1
     w_goal : 1
+    w_social : 1
+    w_obstacle: 0
+  state_constraints:
+    lower_bounds:
+      x: -20
+      y: -20
+      psi: -6.3
+      v_x: -1.5
+      v_y: -1.5
+      w: -1
+    upper_bounds:
+      x: 20
+      y: 20
+      psi: 6.3
+      v_x: 1.5
+      v_y: 1.5
+      w: 1
+  input_constraints:
+    lower_bounds:
+      a_x: -3
+      a_y: -3
+      alpha: -1
+      slack: 0
+    upper_bounds:
+      a_x: 3
+      a_y: 3
+      alpha: 1
+      slack: 0.2
 robot:
   robot_name: dingo
   radius: 0.4

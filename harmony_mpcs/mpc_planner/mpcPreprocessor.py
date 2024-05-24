@@ -5,13 +5,14 @@ from harmony_mpcs.utils.free_space_decomposition import FreeSpaceDecomposition
 
 class MPCPreprocessor(object):
 
-    def __init__(self, config, N, nu, nx):
+    def __init__(self, config, N, nu, nx, nx_per_agent):
         # collision avoidance
         self._n_obstacles = 1
         self._max_radius = 2
         self._N = N
         self._nu = nu
         self._nx = nx
+        self._nx_per_agent = nx_per_agent
         self._fsd = FreeSpaceDecomposition(number_constraints=self._n_obstacles, max_radius=self._max_radius)
         self
 
@@ -42,7 +43,7 @@ class MPCPreprocessor(object):
 
         self._goal_position = obs['goal']['position']
         self._goal_orientation = obs['goal']['orientation']
-        self._initial_pose = obs['x']
+        self._initial_pose = obs['x'][0]
 
 
         x_ref = obs['x']

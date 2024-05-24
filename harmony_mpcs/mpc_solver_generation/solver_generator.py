@@ -3,7 +3,7 @@ import sys, os, shutil
 import numpy as np
 import pickle
 import forcespro.nlp
-import harmony_mpcs.mpc_solver_generation.dynamics as dynamics
+
 import harmony_mpcs.mpc_solver_generation.objective as objective
 
 
@@ -33,8 +33,8 @@ class SolverGenerator(object):
         self._N_bar = self.solver_settings._N + 2
 
         # Systems to control
+        model = self.solver_settings._model
 
-        model = dynamics.PointMass_2order_Model(robot_config=self.solver_settings._robot_config)
         #model.interfaces = settings.interfaces
 
         print(model)
@@ -123,7 +123,7 @@ class SolverGenerator(object):
 
         # save settings
         solver_property_dict = {}
-        properties = {"nx": self._solver.neq, "nu": self._model.nu, "npar": self._solver.npar, "N":self._solver.N,
+        properties = {"nx": self._solver.neq, "nx_per_agent":self.solver_settings._nx_per_agent, "nu": self._model.nu, "npar": self._solver.npar, "N":self._solver.N,
                       "n_static_obstacles": self.solver_settings._n_dynamic_obst, "n_discs": self.solver_settings._n_discs,
                       "n_static_constraints": self.solver_settings._n_static_obst}
 

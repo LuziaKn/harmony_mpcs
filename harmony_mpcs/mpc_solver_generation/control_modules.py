@@ -100,13 +100,16 @@ class EllipsoidalConstraintModule(Module):
     Linear constraints for scenario-based motion planning
     """
 
-    def __init__(self, params, n_discs, n_obst):
+    def __init__(self, params, n_discs, n_obst, interactive=False):
         self.module_name = "EllipsoidalConstraints"  # Needs to correspond to the c++ name of the module
         self.import_name = "modules_constraints/ellipsoidal_constraints.h"
         self.type = "constraint"
 
         self.constraints = []
-        self.constraints.append(inequality.FixedEllipsoidConstraints(params,n_discs, n_obst))
+        if interactive:
+            self.constraints.append(inequality.InteractiveEllipsoidConstraints(params, n_discs, n_obst))
+        else:
+            self.constraints.append(inequality.FixedEllipsoidConstraints(params,n_discs, n_obst))
 
 
 class LinearConstraintModule(Module):

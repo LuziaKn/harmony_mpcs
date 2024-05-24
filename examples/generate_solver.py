@@ -3,7 +3,7 @@ import argparse
 import importlib
 from harmony_mpcs.mpc_solver_generation.solver_generator import SolverGenerator
 
-def generate_solver(config_file_name = 'dingo_config.yaml', solver_settings_file_str = 'solver_settings'):
+def generate_solver(config_file_name = 'dingo_config.yaml', solver_settings_file_str = 'solver_settings_interactive_mpc'):
     current_dir = os.path.dirname(os.path.realpath(__file__))
     config_dir = os.path.join(current_dir, 'config')
 

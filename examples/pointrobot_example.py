@@ -29,10 +29,24 @@ class PointRobotExample(MPCExample):
             goal = {}
             goal['position'] = np.concatenate([obs['goal_global_frame'], np.array([0.0])])
             goal['orientation'] = 0.0
-            dyn_obst = obs['other_agents_states'][:,:self._planner._nx]
+            dyn_obst = obs['other_agents_states'][:,:self._planner._nx_per_agent]
 
-            obs_dict = {"x": x,
-                   "xdot": self.output[1, self._planner._nu + 3: self._planner._nu + self._planner._nx],
+            x_joint = x
+            xdot_joint = self.output[1, self._planner._nu + 3: self._planner._nu + self._planner._nx]
+
+            if self._config['interactive']:
+                # append state
+                x_joint = np.zeros((self._config['n_dynamic_obst']+1, int(self._planner._nx_per_agent/2)))
+                x_joint[0,:] = x
+                xdot_joint = np.zeros((self._config['n_dynamic_obst']+1, int(self._planner._nx_per_agent/2)))
+                xdot_joint[0,:] = self.output[1, self._planner._nu + 3: self._planner._nu + self._planner._nx_per_agent]
+                for i in range(self._config['n_dynamic_obst']):
+                    id = i+1
+                    x_joint[id,:] = dyn_obst[i,:int(self._planner._nx_per_agent/2)]
+                    xdot_joint[id,:] = dyn_obst[i,int(self._planner._nx_per_agent/2):int(self._planner._nx_per_agent/2)+3]
+
+            obs_dict = {"x": x_joint,
+                   "xdot": xdot_joint,
                    "goal": goal,
                    "lidar_point_cloud": self._lidar_pc,
                    "trans_lidar": self._trans,
@@ -47,7 +61,7 @@ class PointRobotExample(MPCExample):
 
 
 
-            env._plot_infos_dict['output'] = self.output[:, self._planner._nu:self._planner._nu+2]
+            env._plot_infos_dict['output'] = self.output[:, self._planner._nu:]
             env._plot_infos_dict['predictions'] = self._planner._predictor.predictions
             start_time = time.time()
             env.render()

@@ -1,5 +1,5 @@
 import casadi as ca
-from harmony_mpcs.utils.utils import get_agent_states, perpendicular
+from harmony_mpcs.utils.utils import get_agent_states, perpendicular_casadi
 class SocialForcesPolicy:
     def __init__(self, sfm_params, radii, id):
 
@@ -24,14 +24,20 @@ class SocialForcesPolicy:
         self._w_obstacle = sfm_params[5]
         self._radii = radii
 
+    def update_params(self, sfm_params):
+        self._goal = sfm_params[:2]
+        self._desired_speed = sfm_params[2]
+        self._w_goal = sfm_params[3]
+        self._w_social = sfm_params[4]
+        self._w_obstacle = sfm_params[5]
     def step(self, joint_state):
 
 
         goal_force = self.compute_goal_force(joint_state)
         social_force = self.compute_ped_repulsive_force(joint_state)
 
-        summed_force = self._w_goal * goal_force + self._w_social * social_force
-        action = ca.vertcat([summed_force, [0]])
+        summed_force = self._w_goal * goal_force# + self._w_social * social_force
+        action = ca.vertcat(summed_force, 0)
         return action
 
     def compute_goal_force(self, joint_state):
@@ -45,8 +51,6 @@ class SocialForcesPolicy:
         d = ca.norm_2(rgi)
         rgi_direction = rgi / (d + self._epsilon)
 
-        if d < 0.5:
-            self._desired_speed = 0.1
 
         force = (rgi_direction * self._desired_speed - vel) / self._rel_time
         return force
@@ -95,7 +99,7 @@ class SocialForcesPolicy:
                 forceAngleAmount = - self._A * ca.sign(theta_) * ca.exp(a_input)
 
                 forceVelocity = forceVelocityAmount * (interaction_direction)
-                forceAngle = forceAngleAmount * perpendicular(interaction_direction)
+                forceAngle = forceAngleAmount * perpendicular_casadi(interaction_direction)
 
                 force += forceVelocity + forceAngle
 
