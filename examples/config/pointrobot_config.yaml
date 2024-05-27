@@ -9,8 +9,9 @@ mpc:
   time_step: 0.1
   slack: False
   interval: 1
-  initialization: 'current_state'
+  initialization: 'previous_plan'
   interactive: True
+  manual_noise: 0
   constraints:
     - SelfCollisionAvoidanceConstraints
     - JointLimitConstraints
@@ -33,7 +34,7 @@ pedestrians:
   sfm:
     desired_speed: 1.4
     w_goal : 1
-    w_social : 1
+    w_social : 2
     w_obstacle: 0
   state_constraints:
     lower_bounds:
@@ -134,8 +135,10 @@ env:
     radius: 0.4
     sfm:
       desired_speed: 1.4
-      w_social: 1
       w_goal: 1
+      w_social: 2
+      w_obstacle: 0
+      eps: 0.1
     state_constraints:
       lower_bounds:
         x: -20

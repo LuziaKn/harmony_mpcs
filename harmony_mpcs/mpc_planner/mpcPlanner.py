@@ -69,6 +69,8 @@ class MPCPlanner(object):
 
         self._robot_radius = self._robot_config['radius']
 
+        self._manual_noise = self._config['manual_noise']
+
         self._output = np.zeros((self._N, self._nx + self._nu))
         print(self._map_runtime_par)
 
@@ -88,12 +90,19 @@ class MPCPlanner(object):
     def setX0(self, initialize_type="current_state", initial_step= True):
         if initialize_type == "current_state" or initialize_type == "previous_plan" and initial_step:
             for i in range(self._N):
-                self._x0[i][0 : self._nx] = self._xinit
+                self._x0[i][self._nu : self._nu + self._nx] = self._xinit
                 self._initial_step = False
         elif initialize_type == "previous_plan":
-            self.shiftHorizon(self.output)
+            self.shiftHorizon(self._output)
         else:
             np.zeros(shape=(self._N, self._nx + self._nu + self._ns))
+
+    def shiftHorizon(self, output):
+        for i in range(len(output)):
+            if i == 0:
+                continue
+            self._x0[i - 1, 0 : len(output[i,:])] = output[i,:]
+        self._x0[-1:, 0 : len(output[i,:])] = output[i,:]
 
     def setWeights(self):
         for N_iter in range(self._N):
@@ -145,9 +154,9 @@ class MPCPlanner(object):
             k = N_iter * self._npar
             self._predictor.predict(self._dyn_obst[:,:3], self._dyn_obst[:,3:], self._N)
 
-            manual_noise = 0.3
-            major = np.sqrt(major**2 + (manual_noise * self._dt)**2)
-            minor = np.sqrt(minor**2 + (manual_noise * self._dt)**2)
+
+            major = np.sqrt(major**2 + (self._manual_noise * self._dt)**2)
+            minor = np.sqrt(minor**2 + (self._manual_noise * self._dt)**2)
             
             for obst_id in range(self._n_dynamic_obst):
                 pos =  self._predictor.predictions[obst_id][N_iter]

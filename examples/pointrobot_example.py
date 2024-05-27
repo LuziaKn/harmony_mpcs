@@ -56,6 +56,7 @@ class PointRobotExample(MPCExample):
             if self.exitflag <1:
                 print('exit flag:', self.exitflag)
                 action = np.array([0,0,0])
+
             obs, reward, done, _ = env.step(action)
 
 
@@ -66,8 +67,8 @@ class PointRobotExample(MPCExample):
             start_time = time.time()
             env.render()
             end_time = time.time()
-            print(end_time - start_time)
-            print(f"Action: {action}, Reward: {reward}, Done: {done}")
+            #print(end_time - start_time)
+            #print(f"Action: {action}, Reward: {reward}, Done: {done}")
 
         env.close()
 def main():

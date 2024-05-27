@@ -15,7 +15,7 @@ class SocialForcesPolicy:
         self._n_prime = 3
 
         self._epsilon = 0.01
-        self._eps = 0.05
+        self._eps = 0.1
 
         self._goal = sfm_params[:2]
         self._desired_speed = sfm_params[2]
@@ -36,7 +36,7 @@ class SocialForcesPolicy:
         goal_force = self.compute_goal_force(joint_state)
         social_force = self.compute_ped_repulsive_force(joint_state)
 
-        summed_force = self._w_goal * goal_force# + self._w_social * social_force
+        summed_force = self._w_goal * goal_force + self._w_social * social_force
         action = ca.vertcat(summed_force, 0)
         return action
 
@@ -57,14 +57,14 @@ class SocialForcesPolicy:
 
     def compute_ped_repulsive_force(self, joint_state):
         # computes the repulsive force from pedestrians
-        force = 0
+        force = ca.SX([0.0, 0.0])
         ego_pos = get_agent_states(joint_state, self._ego_id)[:2]
         ego_vel = get_agent_states(joint_state, self._ego_id)[3:5]
         ego_radius = self._radii[self._ego_id]
         for i in range(len(self._radii)):
             if i != self._ego_id:
                 other_pos = get_agent_states(joint_state, i)[:2]
-                other_vel = get_agent_states(joint_state, i)[:2]
+                other_vel = get_agent_states(joint_state, i)[3:5]
                 other_radius = self._radii[i]
 
                 rij = other_pos - ego_pos
@@ -89,14 +89,14 @@ class SocialForcesPolicy:
 
                 theta = ca.atan2(cross_product, dot_product)
 
-                B = self._gamma * interaction_length
+                B = self._gamma * interaction_length + self._epsilon
 
                 theta_ = theta + B * self._eps
 
                 v_input = -d_without_radius / B - (self._n_prime * B * theta_) * (self._n_prime * B * theta_)
                 a_input = -d_without_radius / B - (self._n * B * theta_) * (self._n * B * theta_)
                 forceVelocityAmount = - self._A * ca.exp(v_input)
-                forceAngleAmount = - self._A * ca.sign(theta_) * ca.exp(a_input)
+                forceAngleAmount = - self._A * theta/(ca.norm_2(theta_) + self._epsilon) * ca.exp(a_input)
 
                 forceVelocity = forceVelocityAmount * (interaction_direction)
                 forceAngle = forceAngleAmount * perpendicular_casadi(interaction_direction)

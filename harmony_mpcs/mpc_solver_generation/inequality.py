@@ -190,6 +190,7 @@ class InteractiveEllipsoidConstraints:
         self.max_obstacles = max_obstacles
         self.n_discs = n_discs
         self.name = "interactive_ellipsoid_obst"
+        self._epsilon = 0.01
 
         print(self.name)
 
@@ -208,12 +209,14 @@ class InteractiveEllipsoidConstraints:
     def append_lower_bound(self, lower_bound):
         for scenario in range(0, self.max_obstacles):
             for disc in range(0, self.n_discs):
-                lower_bound.append(1.0)
+                #lower_bound.append(1.0)
+                lower_bound.append(-np.inf)
 
     def append_upper_bound(self, upper_bound):
         for scenario in range(0, self.max_obstacles):
             for disc in range(0, self.n_discs):
-                upper_bound.append(np.Inf)
+                #upper_bound.append(np.Inf)
+                upper_bound.append(0.)
 
     def append_constraints(self, constraints, z, param, settings, model):
         settings._params.load_params(param)
@@ -257,9 +260,9 @@ class InteractiveEllipsoidConstraints:
                 disc_to_obstacle = disc_pos - obst_pos
                 c_disc_obstacle = ca.mtimes(disc_to_obstacle.T, ca.mtimes(obstacle_ellipse_matrix, disc_to_obstacle))
 
-                A = (obst_pos - disc_pos) / ca.norm_2(disc_pos - obst_pos)
+                A = (obst_pos - disc_pos) / (ca.norm_2(disc_pos - obst_pos) + self._epsilon)
                 b = A.T @ (obst_pos - A * (obst_r + disc_r))
-                constraints.append(c_disc_obstacle)
+                constraints.append(A.T@disc_pos - b)
                 print('constraint added agent' + str(i + 1))
 
 
