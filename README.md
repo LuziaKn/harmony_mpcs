@@ -3,7 +3,7 @@
     <img src="./assets/example.png"  alt="1" height = 200px >
 </p>
 
-Repo including a simple mpc planner for a mobile base. The implementation is completely independent of the Robot Operating System (ROS) but can be combined with ROS1 (and soon ROS2) via [harmony_mpcs_ros](https://github.com/LuziaKn/harmony_mpcs_ros).
+Repo including a simple mpc planner for a mobile base. The implementation is completely independent of the Robot Operating System (ROS) but can be combined with ROS1 and ROS2 via [harmony_mpcs_ros](https://github.com/LuziaKn/harmony_mpcs_ros).
 
 ## Requirements
 The implementation currently uses **Embotech's ForcesPro** solver. The license is free for educational use. 
